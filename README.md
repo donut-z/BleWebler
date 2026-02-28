@@ -2,7 +2,7 @@
 
 **BleWebler** is a browser-based solution for thermal label printing. It leverages the **Web Bluetooth API** to connect directly to supported Bluetooth Low Energy (BLE) printers, eliminating the need for drivers, proprietary apps, or vendor lock-in.
 
-# [**Try it here!**](https://josb25.github.io/BleWebler/)
+# [**Try it here!**](https://donut-z.github.io/BleWebler/)
 
 ---
 
