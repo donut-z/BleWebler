@@ -445,6 +445,8 @@ function addTextToCanvas() {
   canvas.renderAll();
   updateTextControls();
   canvas.renderAll();
+  
+  document.querySelector('.toggle-btn[data-property="bold"]').classList.add('active');
 }
 
 function deleteSelectedObject() {
