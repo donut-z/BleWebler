@@ -51,7 +51,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Basic web-safe fonts
-  const basicFonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia", "Impact", "Tahoma", "Trebuchet MS"];
+   const basicFonts = [
+    // Web-safe (altijd beschikbaar)
+    "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact",
+    // Google Fonts (labelprinter-vriendelijk)
+    "Roboto", "Inter", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed"
+   ];
 
   // Event listeners for toggle buttons
   document.querySelectorAll('.toggle-btn').forEach(button => {
