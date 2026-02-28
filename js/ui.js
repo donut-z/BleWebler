@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.fabricEditor && window.fabricEditor.getActiveObject()) {
       fontFamilyInput.value = window.fabricEditor.getActiveObject().fontFamily;
     } else {
-      fontFamilyInput.value = "Arial"; // Default
+      fontFamilyInput.value = "Verdana"; // Default
     }
   }
 
