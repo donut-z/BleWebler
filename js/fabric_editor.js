@@ -426,7 +426,7 @@ function addTextToCanvas() {
   const newText = new fabric.IText(textContent, {
     left: bounds.left,
     fontFamily: fontFamilyInput.value || 'Verdana', // Use fontFamilySelect
-    fontSize: parseFloat(fontSizeInput.value) || 48,
+    fontSize: parseFloat(fontSizeInput.value) || 32,
     fill: '#000000',
     fontWeight: 'bold', // Default to normal, will be set by toggleStyle if active
     fontStyle: 'normal',  // Default to normal, will be set by toggleStyle if active
