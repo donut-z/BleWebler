@@ -632,8 +632,27 @@ document.addEventListener("DOMContentLoaded", () => {
         startupModal.classList.add("show");
       }
     } else {
-      // No URL params, show modal
-      startupModal.classList.add("show");
+      // Probeer localStorage
+      const saved = localStorage.getItem('blewebler_settings');
+      if (saved) {
+        const s = JSON.parse(saved);
+        printerSelect.value = s.printer;
+        paperWidthInput.value = s.width;
+        paperHeightInput.value = s.height;
+        if (infinitePaperCheckbox) {
+          infinitePaperCheckbox.checked = s.infinite;
+          infinitePaperCheckbox.dispatchEvent(new Event('change'));
+        }
+        if (paddingTopInput) paddingTopInput.value = s.paddingTop;
+        if (paddingBottomInput) paddingBottomInput.value = s.paddingBottom;
+        if (paddingLeftInput) paddingLeftInput.value = s.paddingLeft;
+        if (paddingRightInput) paddingRightInput.value = s.paddingRight;
+        applyPrinterSettings(s.printer, s.width, s.height, s.infinite,
+          s.paddingTop, s.paddingBottom, s.paddingLeft, s.paddingRight);
+      } else {
+        // Eerste keer, toon modal
+        startupModal.classList.add("show");
+      }
     }
 
     if (settingsBtn) {
@@ -734,6 +753,13 @@ document.addEventListener("DOMContentLoaded", () => {
       newUrl.searchParams.set('paddingLeft', paddingLeftMm);
       newUrl.searchParams.set('paddingRight', paddingRightMm);
       window.history.replaceState({}, '', newUrl);
+
+      // Sla instellingen op in localStorage
+      localStorage.setItem('blewebler_settings', JSON.stringify({
+        printer: selectedPrinterIndex, width: widthMm, height: heightMm,
+        infinite: isInfinite, paddingTop: paddingTopMm, paddingBottom: paddingBottomMm,
+        paddingLeft: paddingLeftMm, paddingRight: paddingRightMm
+      }));
     });
   }
 });
