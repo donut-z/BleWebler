@@ -440,6 +440,7 @@ function addTextToCanvas() {
   });
   canvas.add(newText);
   canvas.setActiveObject(newText);
+  window.fabricEditor.setTextAlign('center'); // For centering on new text
   newText.enterEditing();
   newText.selectAll();
   canvas.renderAll();
@@ -968,7 +969,7 @@ function updateTextControls() {
 
 function clearTextControls() {
   // Reset to default or clear when no text object is selected
-  fontSizeInput.value = '48';
+  fontSizeInput.value = '32';
   fontFamilyInput.value = 'Verdana';
   document.querySelectorAll('.toggle-btn').forEach(button => {
     button.classList.remove('active');
