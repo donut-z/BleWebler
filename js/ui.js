@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Web-safe (altijd beschikbaar)
     "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact",
     // Google Fonts (labelprinter-vriendelijk)
-    "Roboto", "Inter", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed"
+    "Roboto", "Inter", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed", "Open Sans", "Montserrat"
    ];
 
   // Event listeners for toggle buttons
