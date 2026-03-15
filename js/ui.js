@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Basic web-safe fonts
    const basicFonts = [
     // Web-safe (altijd beschikbaar)
-    "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact",
+    "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact", "Courier New",
     // Google Fonts (labelprinter-vriendelijk)
     "Roboto", "Inter", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed", "Open Sans", "Montserrat"
    ];
