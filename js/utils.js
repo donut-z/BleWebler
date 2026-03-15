@@ -168,8 +168,8 @@ function constructBitmap(canvasHeight, copyCount, isInfinitePaper, ignoreSelecti
     let row = "";
     for (let x = 0; x < canvasWidth; x++) {
       const i = (y * canvasWidth + x) * 4;
-      const avg = (imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3;
-      row += avg < 128 ? "1" : "0";
+      const lum = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2];
+      row += lum < 128 ? "1" : "0";
     }
     bitmap.push(row);
   }
