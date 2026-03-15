@@ -975,7 +975,7 @@ function updateTextControls() {
 
 function clearTextControls() {
   // Reset to default or clear when no text object is selected
-  fontSizeInput.value = '32';
+  fontSizeInput.value = '38';
   fontFamilyInput.value = 'Verdana';
   document.querySelectorAll('.toggle-btn').forEach(button => {
     button.classList.remove('active');
