@@ -340,6 +340,12 @@ function constrainObjectToCanvas(obj) {
   // Update cached bounding box
   obj.setCoords();
 
+  // Forceer hele pixels voor scherpere print
+  obj.set({
+    left: Math.round(obj.left),
+    top: Math.round(obj.top)
+  });
+
   // Get object dimensions
   const objBBox = obj.getBoundingRect();
   const objWidth = objBBox.width;

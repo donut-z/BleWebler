@@ -15,7 +15,7 @@ class MarklifeP12Printer extends PrinterBase {
       var packets = [
         Uint8Array.from([0x10, 0xff, 0x40]), // initialization packet
         Uint8Array.from([
-          ...new Array(15).fill(0x00),
+          ...new Array(5).fill(0x00),
           0x10, 0xff, 0xf1, 0x02, 0x1d,
           0x76,
           0x30, 0x00,
