@@ -432,7 +432,7 @@ function addTextToCanvas() {
   const newText = new fabric.IText(textContent, {
     left: bounds.left,
     fontFamily: fontFamilyInput.value || 'Verdana', // Use fontFamilySelect
-    fontSize: parseFloat(fontSizeInput.value) || 38,
+    fontSize: parseFloat(fontSizeInput.value) || 40,
     fill: '#000000',
     fontWeight: 'bold', // Default to normal, will be set by toggleStyle if active
     fontStyle: 'normal',  // Default to normal, will be set by toggleStyle if active
@@ -975,7 +975,7 @@ function updateTextControls() {
 
 function clearTextControls() {
   // Reset to default or clear when no text object is selected
-  fontSizeInput.value = '38';
+  fontSizeInput.value = '40';
   fontFamilyInput.value = 'Verdana';
   document.querySelectorAll('.toggle-btn').forEach(button => {
     button.classList.remove('active');
