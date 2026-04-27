@@ -1,10 +1,19 @@
 function toggleAdvanced() {
   const section = document.getElementById("advancedSection");
-  const toggleButton = document.querySelector("button[onclick='toggleAdvanced()']");
+  const toggleButton = document.getElementById("advancedToggleBtn");
+  const chevron = toggleButton.querySelector(".chevron-icon");
 
-  const visible = section.style.display !== "none";
-  section.style.display = visible ? "none" : "block";
-  toggleButton.textContent = visible ? "Show Advanced" : "Hide Advanced";
+  const isHidden = section.style.display === "none" || section.style.display === "";
+  
+  if (isHidden) {
+    section.style.display = "block";
+    toggleButton.querySelector(".toggle-text").textContent = "Hide Advanced";
+    if (chevron) chevron.style.transform = "rotate(180deg)";
+  } else {
+    section.style.display = "none";
+    toggleButton.querySelector(".toggle-text").textContent = "Show Advanced";
+    if (chevron) chevron.style.transform = "rotate(0deg)";
+  }
 }
 
 
@@ -463,28 +472,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dimension input handlers
   if (widthInput) {
-    widthInput.addEventListener('change', () => {
-      isUpdatingFromInputs = true;
+    widthInput.addEventListener('input', () => {
       updateCanvasFromInputs();
-      isUpdatingFromInputs = false;
-    });
-    widthInput.addEventListener('blur', () => {
-      isUpdatingFromInputs = true;
-      updateCanvasFromInputs();
-      isUpdatingFromInputs = false;
     });
   }
 
   if (heightInput) {
-    heightInput.addEventListener('change', () => {
-      isUpdatingFromInputs = true;
+    heightInput.addEventListener('input', () => {
       updateCanvasFromInputs();
-      isUpdatingFromInputs = false;
-    });
-    heightInput.addEventListener('blur', () => {
-      isUpdatingFromInputs = true;
-      updateCanvasFromInputs();
-      isUpdatingFromInputs = false;
     });
   }
 
@@ -500,6 +495,33 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
   }
+
+  // Height Lock Toggle Logic
+  window.toggleHeightLock = function() {
+    const hInput = document.getElementById("heightInput");
+    const lockBtn = document.getElementById("heightLockBtn");
+    const lockIcon = lockBtn.querySelector("path");
+    
+    const isLocked = lockBtn.classList.contains("locked");
+    
+    if (isLocked) {
+      // Unlock
+      lockBtn.classList.remove("locked");
+      lockBtn.classList.add("unlocked");
+      lockBtn.title = "Lock Height";
+      hInput.disabled = false;
+      // SVG path for unlocked
+      lockIcon.setAttribute("d", "M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5-2.28 0-4.27 1.54-4.84 3.59.04.13.11.23.23.28l1.3.43c.12.04.25.02.34-.06.28-.24.59-.44.93-.57.65-.24 1.35-.26 2.04-.05 1.11.35 1.94 1.3 2.13 2.46.06.39.06.77.01 1.15H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM6 20V10h12v10H6z");
+    } else {
+      // Lock
+      lockBtn.classList.add("locked");
+      lockBtn.classList.remove("unlocked");
+      lockBtn.title = "Unlock Height";
+      hInput.disabled = true;
+      // SVG path for locked
+      lockIcon.setAttribute("d", "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10z");
+    }
+  };
 
   if (startupModal && printerSelect && startBtn) {
     // 1. Populate Printer List
@@ -680,12 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Home title click handler - go back to home (clear URL params)
-    if (homeTitle) {
-      homeTitle.addEventListener("click", () => {
-        window.location.href = window.location.pathname;
-      });
-    }
+    // Home title click handler removed as title is no longer clickable
 
     // Function to update padding from inputs
     const updatePaddingFromInputs = () => {

@@ -63,7 +63,7 @@ async function printLabel() {
 
         // Construct bitmap for a SINGLE copy
         // We pass 1 as copyCount to constructBitmap so it generates just one label
-        // We preserve isInfinitePaper and spacingMm logic, though spacingMm mostly applies to the "gap" in the canvas method. 
+        // We preserve isInfinitePaper and spacingMm logic, though spacingMm mostly applies to the "gap" in the canvas method.
         // For separate print jobs, the printer's feed commands (in the class) handle the separation.
         const bitmap = constructBitmap(printer.px, 1, isInfinitePaper);
 
