@@ -25,7 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas = new fabric.Canvas('fabricCanvas', {
     enableRetinaScaling: false,
     objectCaching: false,
-    allowTouchScrolling: true
+    allowTouchScrolling: true,
+    stopContextMenu: false // Allow browser context menu (for select/copy/paste)
   });
   canvas.setHeight(96); // Printer height
   canvas.setWidth(320); // Max width for a label
@@ -92,6 +93,27 @@ document.addEventListener("DOMContentLoaded", () => {
       updateQRCodeFromInput();
     });
   }
+
+  canvas.on('text:editing:entered', (e) => {
+    const obj = e.target;
+    if (obj && obj.hiddenTextarea) {
+      // Zorg dat het verborgen tekstveld 'echt' voelt voor de mobiele browser
+      obj.hiddenTextarea.style.visibility = 'visible';
+      obj.hiddenTextarea.style.opacity = '0'; // Onzichtbaar maar aanwezig
+      obj.hiddenTextarea.style.left = obj.left + 'px';
+      obj.hiddenTextarea.style.top = obj.top + 'px';
+      obj.hiddenTextarea.style.width = '10px';
+      obj.hiddenTextarea.style.height = '10px';
+      obj.hiddenTextarea.focus();
+    }
+  });
+
+  canvas.on('text:editing:exited', (e) => {
+    const obj = e.target;
+    if (obj && obj.hiddenTextarea) {
+      obj.hiddenTextarea.style.visibility = 'hidden';
+    }
+  });
 
   // Event listener for object selection to update UI controls
   canvas.on('selection:cleared', (e) => {
@@ -438,6 +460,16 @@ function addTextToCanvas() {
     fontStyle: 'normal',  // Default to normal, will be set by toggleStyle if active
     underline: false,     // Default to false, will be set by toggleStyle if active
     textBaseline: 'alphabetic', // Explicitly set a valid textBaseline
+    lockUniScaling: true, // Force proportional scaling
+  });
+
+  // Hide middle controls (only allow corner scaling)
+  newText.setControlsVisibility({
+    mt: false, 
+    mb: false, 
+    ml: false, 
+    mr: false,
+    mtr: true // Keep rotation handle
   });
 
   // Center vertically within padding bounds
@@ -448,6 +480,14 @@ function addTextToCanvas() {
   canvas.setActiveObject(newText);
   window.fabricEditor.setTextAlign('center'); // For centering on new text
   newText.enterEditing();
+  
+  // Ensure the hidden textarea is accessible for mobile selection menu
+  if (newText.hiddenTextarea) {
+    newText.hiddenTextarea.setAttribute('spellcheck', 'true');
+    newText.hiddenTextarea.style.userSelect = 'text';
+    newText.hiddenTextarea.style.webkitUserSelect = 'text';
+  }
+
   newText.selectAll();
   canvas.renderAll();
   updateTextControls();
@@ -1163,72 +1203,6 @@ function updatePaddingGuides() {
     }
   });
 
-  // Only show guides if padding is set
-  if (paddingState.top === 0 && paddingState.bottom === 0 &&
-    paddingState.left === 0 && paddingState.right === 0) {
-    return;
-  }
-
-  // Create guide rectangles (semi-transparent overlays)
-  const guideOptions = {
-    fill: 'rgba(255, 0, 0, 0.1)',
-    stroke: 'rgba(255, 0, 0, 0.3)',
-    strokeWidth: 1,
-    selectable: false,
-    evented: false,
-    excludeFromExport: true,
-    paddingGuide: true
-  };
-
-  // Top padding guide
-  if (paddingState.top > 0) {
-    paddingGuides.top = new fabric.Rect({
-      left: 0,
-      top: 0,
-      width: canvasWidth,
-      height: paddingState.top,
-      ...guideOptions
-    });
-    canvas.add(paddingGuides.top);
-    canvas.sendToBack(paddingGuides.top);
-  }
-
-  // Bottom padding guide
-  if (paddingState.bottom > 0) {
-    paddingGuides.bottom = new fabric.Rect({
-      left: 0,
-      top: canvasHeight - paddingState.bottom,
-      width: canvasWidth,
-      height: paddingState.bottom,
-      ...guideOptions
-    });
-    canvas.add(paddingGuides.bottom);
-    canvas.sendToBack(paddingGuides.bottom);
-  }
-
-  // Left padding guide
-  if (paddingState.left > 0) {
-    paddingGuides.left = new fabric.Rect({
-      left: 0,
-      top: paddingState.top,
-      width: paddingState.left,
-      height: canvasHeight - paddingState.top - paddingState.bottom,
-      ...guideOptions
-    });
-    canvas.add(paddingGuides.left);
-    canvas.sendToBack(paddingGuides.left);
-  }
-
-  // Right padding guide
-  if (paddingState.right > 0) {
-    paddingGuides.right = new fabric.Rect({
-      left: canvasWidth - paddingState.right,
-      top: paddingState.top,
-      width: paddingState.right,
-      height: canvasHeight - paddingState.top - paddingState.bottom,
-      ...guideOptions
-    });
-    canvas.add(paddingGuides.right);
-    canvas.sendToBack(paddingGuides.right);
-  }
+  // Guides disabled by user request
+  return;
 }

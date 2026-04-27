@@ -650,7 +650,11 @@ document.addEventListener("DOMContentLoaded", () => {
         applyPrinterSettings(s.printer, s.width, s.height, s.infinite,
           s.paddingTop, s.paddingBottom, s.paddingLeft, s.paddingRight);
       } else {
-        // Eerste keer, toon modal
+        // Eerste keer, toon modal en zet infinite paper standaard aan
+        if (infinitePaperCheckbox) {
+          infinitePaperCheckbox.checked = true;
+          infinitePaperCheckbox.dispatchEvent(new Event('change'));
+        }
         startupModal.classList.add("show");
       }
     }
@@ -773,5 +777,78 @@ function setTextAlign(alignment) {
 function setVerticalAlign(alignment) {
   if (window.fabricEditor) {
     window.fabricEditor.setVerticalAlign(alignment);
+  }
+}
+
+window.addDateTemplate = function() {
+  console.log("addDateTemplate called");
+  if (!window.fabricEditor) {
+    console.error("fabricEditor not found");
+    return;
+  }
+
+  const widthMm = 20;
+  const heightMm = 12;
+
+  let dpm = 8;
+  if (typeof supportedPrinters !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPrinter = urlParams.get('printer');
+    const pIndex = parseInt(urlPrinter);
+    if (!isNaN(pIndex) && supportedPrinters[pIndex]) {
+      dpm = supportedPrinters[pIndex].dpm;
+    }
+  }
+
+  console.log("Using DPM:", dpm);
+  const widthPx = Math.round(widthMm * dpm);
+  const heightPx = Math.round(heightMm * dpm);
+
+  window.fabricEditor.updateCanvasSize(widthPx, heightPx);
+
+  const widthInput = document.getElementById("widthInput");
+  const heightInput = document.getElementById("heightInput");
+  if (widthInput) widthInput.value = widthMm.toFixed(1);
+  if (heightInput) heightInput.value = heightMm.toFixed(1);
+
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = String(now.getFullYear()).slice(-2);
+  const dateString = `${d}-${m}-${y}`;
+
+  const canvas = window.getFabricCanvas();
+  if (canvas) {
+    canvas.clear();
+
+    const text = new fabric.IText(dateString, {
+      left: 0,
+      top: 0,
+      fontFamily: 'Verdana',
+      fontSize: 32,
+      fontWeight: 'bold',
+      fill: '#000000',
+      lockUniScaling: true
+    });
+
+    text.setControlsVisibility({
+      mt: false, mb: false, ml: false, mr: false, mtr: true
+    });
+
+    canvas.add(text);
+    // Removed text.center() to keep it at top-left (0,0)
+    canvas.setActiveObject(text);
+    
+    // Support mobile selection menu
+    if (text.hiddenTextarea) {
+      text.hiddenTextarea.setAttribute('spellcheck', 'true');
+      text.hiddenTextarea.style.userSelect = 'text';
+      text.hiddenTextarea.style.webkitUserSelect = 'text';
+    }
+
+    canvas.renderAll();
+    console.log("Date added to canvas:", dateString);
+  } else {
+    console.error("Canvas not found");
   }
 }

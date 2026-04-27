@@ -132,6 +132,11 @@
         <!-- General Controls -->
         <div id="general-controls-box">
           <div id="text-input-group" class="control-group">
+            <button onclick="addDateTemplate()" class="btn btn-icon btn-secondary" title="Add Date Template">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+            </button>
             <button onclick="addTextToCanvas()" class="btn btn-icon" title="Add Text">
               <svg class="icon" viewBox="0 0 24 24">
                 <path d="M5 4v3h5.5v12h3V7H19V4z" />
@@ -233,29 +238,7 @@
             </button>
           </div>
 
-          <div id="padding-controls-group" class="control-group mb-4">
-            <label
-              style="font-weight: 500; margin-bottom: var(--spacing-xs); display: block; font-size: 0.9rem;">Padding
-              (mm):</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
-              <div>
-                <label for="paddingTop" style="font-size: 0.85rem; color: var(--text-muted);">Top:</label>
-                <input type="number" id="paddingTop" value="0" min="0" step="0.5" style="width: 80px;">
-              </div>
-              <div>
-                <label for="paddingBottom" style="font-size: 0.85rem; color: var(--text-muted);">Bottom:</label>
-                <input type="number" id="paddingBottom" value="0" min="0" step="0.5" style="width: 80px;">
-              </div>
-              <div>
-                <label for="paddingLeft" style="font-size: 0.85rem; color: var(--text-muted);">Left:</label>
-                <input type="number" id="paddingLeft" value="0" min="0" step="0.5" style="width: 80px;">
-              </div>
-              <div>
-                <label for="paddingRight" style="font-size: 0.85rem; color: var(--text-muted);">Right:</label>
-                <input type="number" id="paddingRight" value="0" min="0" step="0.5" style="width: 80px;">
-              </div>
-            </div>
-          </div>
+
 
           <div id="qr-controls-group" class="control-group"
             style="display: none; flex-direction: column; gap: var(--spacing-md);">
@@ -427,7 +410,7 @@
 
         <div class="form-group" id="paperWidthContainer">
           <label for="paperWidth">Paper Width (mm):</label>
-          <input type="number" id="paperWidth" value="40" min="10" max="100">
+          <input type="number" id="paperWidth" value="30" min="10" max="100">
         </div>
 
         <div class="form-group">

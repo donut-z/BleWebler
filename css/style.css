@@ -396,9 +396,18 @@ select:focus {
   font-weight: 500;
 }
 
+.canvas-container, 
+.canvas-container *,
+canvas {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-touch-callout: default !important; /* Forceert het menu bij lang indrukken op iOS/Android */
+}
+
 #fabricCanvas {
   box-shadow: var(--shadow-sm);
   background: white;
+  touch-action: manipulation;
 }
 
 .resize-handle {
