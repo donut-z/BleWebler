@@ -787,29 +787,14 @@ window.addDateTemplate = function() {
     return;
   }
 
-  const widthMm = 20;
-  const heightMm = 12;
-
-  let dpm = 8;
-  if (typeof supportedPrinters !== 'undefined') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlPrinter = urlParams.get('printer');
-    const pIndex = parseInt(urlPrinter);
-    if (!isNaN(pIndex) && supportedPrinters[pIndex]) {
-      dpm = supportedPrinters[pIndex].dpm;
-    }
+  const canvas = window.getFabricCanvas();
+  if (!canvas) {
+    console.error("Canvas not found");
+    return;
   }
 
-  console.log("Using DPM:", dpm);
-  const widthPx = Math.round(widthMm * dpm);
-  const heightPx = Math.round(heightMm * dpm);
-
-  window.fabricEditor.updateCanvasSize(widthPx, heightPx);
-
-  const widthInput = document.getElementById("widthInput");
-  const heightInput = document.getElementById("heightInput");
-  if (widthInput) widthInput.value = widthMm.toFixed(1);
-  if (heightInput) heightInput.value = heightMm.toFixed(1);
+  const widthPx = canvas.getWidth();
+  const heightPx = canvas.getHeight();
 
   const now = new Date();
   const d = String(now.getDate()).padStart(2, '0');
@@ -817,38 +802,41 @@ window.addDateTemplate = function() {
   const y = String(now.getFullYear()).slice(-2);
   const dateString = `${d}-${m}-${y}`;
 
-  const canvas = window.getFabricCanvas();
-  if (canvas) {
-    canvas.clear();
+  canvas.clear();
 
-    const text = new fabric.IText(dateString, {
-      left: 0,
-      top: 0,
-      fontFamily: 'Verdana',
-      fontSize: 32,
-      fontWeight: 'bold',
-      fill: '#000000',
-      lockUniScaling: true
-    });
+  const text = new fabric.IText(dateString, {
+    left: 0,
+    top: 0,
+    fontFamily: 'Verdana',
+    fontSize: 40, // Start grootte, wordt hieronder geschaald
+    fontWeight: 'bold',
+    fill: '#000000',
+    lockUniScaling: true
+  });
 
-    text.setControlsVisibility({
-      mt: false, mb: false, ml: false, mr: false, mtr: true
-    });
+  text.setControlsVisibility({
+    mt: false, mb: false, ml: false, mr: false, mtr: true
+  });
 
-    canvas.add(text);
-    // Removed text.center() to keep it at top-left (0,0)
-    canvas.setActiveObject(text);
-    
-    // Support mobile selection menu
-    if (text.hiddenTextarea) {
-      text.hiddenTextarea.setAttribute('spellcheck', 'true');
-      text.hiddenTextarea.style.userSelect = 'text';
-      text.hiddenTextarea.style.webkitUserSelect = 'text';
-    }
+  // Schaal naar breedte (met 5% marge aan de zijkanten)
+  text.scaleToWidth(widthPx * 0.95);
 
-    canvas.renderAll();
-    console.log("Date added to canvas:", dateString);
-  } else {
-    console.error("Canvas not found");
+  // Als de tekst nu te hoog is voor het label, schaal dan naar de hoogte
+  if (text.getScaledHeight() > heightPx * 0.95) {
+    text.scaleToHeight(heightPx * 0.95);
   }
+
+  canvas.add(text);
+  text.center(); // Centreer op het huidige canvas
+  canvas.setActiveObject(text);
+
+  // Support mobile selection menu
+  if (text.hiddenTextarea) {
+    text.hiddenTextarea.setAttribute('spellcheck', 'true');
+    text.hiddenTextarea.style.userSelect = 'text';
+    text.hiddenTextarea.style.webkitUserSelect = 'text';
+  }
+
+  canvas.renderAll();
+  console.log("Date added and scaled to fit current label.");
 }

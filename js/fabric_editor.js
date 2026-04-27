@@ -1156,8 +1156,29 @@ window.fabricEditor = {
 
   updateCanvasSize: function (width, height) {
     if (canvas) {
+      const oldWidth = canvas.getWidth() || width;
+      const oldHeight = canvas.getHeight() || height;
+
       canvas.setWidth(width);
       canvas.setHeight(height);
+
+      // Bereken de schaalfactor op basis van de breedteverandering (belangrijkste voor labels)
+      const scaleFactor = width / oldWidth;
+
+      canvas.getObjects().forEach(obj => {
+        if (obj.paddingGuide || obj.excludeFromExport) return;
+
+        // Verschuif positie
+        obj.left *= scaleFactor;
+        obj.top *= (height / oldHeight); // Hoogte schaalt apart voor positie
+
+        // Schaal het object zelf (proportioneel)
+        obj.scaleX *= scaleFactor;
+        obj.scaleY *= scaleFactor;
+
+        obj.setCoords();
+      });
+
       updatePaddingGuides();
       canvas.renderAll();
       canvas.fire('canvas:resized', { width: width, height: height });
