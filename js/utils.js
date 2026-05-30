@@ -48,9 +48,9 @@ async function printLabel() {
 
     if (printerInstance) {
       const printer = supportedPrinters.find(p => p.pattern.test(device.name));
-      const infinitePaperCheckbox = document.getElementById("infinitePaperCheckbox");
-      const isSegmented = infinitePaperCheckbox ? !infinitePaperCheckbox.checked : true; // Default to segmented if checkbox missing
-      const isInfinitePaper = infinitePaperCheckbox ? infinitePaperCheckbox.checked : false;
+      const widthLockBtn = document.getElementById("widthLockBtn");
+      const isInfinitePaper = widthLockBtn ? !widthLockBtn.classList.contains("locked") : true;
+      const isSegmented = !isInfinitePaper;
 
       // Get copy count and spacing
       const copyCountInput = document.getElementById("copyCount");

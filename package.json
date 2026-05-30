@@ -1,0 +1,12 @@
+{
+  "name": "blewebler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based solution for thermal label printing using Web Bluetooth API.",
+  "scripts": {
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}

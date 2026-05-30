@@ -3,6 +3,28 @@ let fontSizeInput;
 let fontFamilyInput;
 let ditheringAlgorithmSelect; // New reference
 
+// Customize Fabric.js serialization to include custom properties
+if (window.fabric) {
+  const originalToObject = fabric.Object.prototype.toObject;
+  fabric.Object.prototype.toObject = function (additionalProperties) {
+    return originalToObject.call(this, [
+      'alignment',
+      'verticalAlignment',
+      'isQRCode',
+      'qrContent',
+      'isUploadedImage',
+      'ditheringAlgorithm',
+      'originalImageDataURL',
+      'originalWidth',
+      'originalHeight',
+      'qrModuleCount',
+      'lockUniScaling',
+      'lockScalingFlip',
+      ...(additionalProperties || [])
+    ]);
+  };
+}
+
 // Padding state (in pixels)
 let paddingState = {
   top: 0,
@@ -112,6 +134,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const obj = e.target;
     if (obj && obj.hiddenTextarea) {
       obj.hiddenTextarea.style.visibility = 'hidden';
+    }
+  });
+
+  canvas.on('text:changed', (e) => {
+    if (window.fabricEditor && window.fabricEditor.checkAndGrowCanvas) {
+      window.fabricEditor.checkAndGrowCanvas();
     }
   });
 
@@ -286,6 +314,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // Constrain object movement to stay within padding bounds
   canvas.on('object:moving', (e) => {
     constrainObjectToCanvas(e.target);
+    
+    // Clear alignments when manually dragged
+    if (e.target) {
+      if (e.target.alignment !== null || e.target.verticalAlignment !== null) {
+        e.target.alignment = null;
+        e.target.verticalAlignment = null;
+        updateTextControls();
+      }
+    }
   });
 
   // Event listeners for styling controls
@@ -335,6 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
               originalWidth: tempImage.width,
               originalHeight: tempImage.height,
               isUploadedImage: true,
+              alignment: 'left',
             });
 
             canvas.add(img);
@@ -479,6 +517,7 @@ function addTextToCanvas() {
   canvas.add(newText);
   canvas.setActiveObject(newText);
   window.fabricEditor.setTextAlign('center'); // For centering on new text
+  window.fabricEditor.setVerticalAlign('middle'); // For vertical centering on new text
   newText.enterEditing();
   
   // Ensure the hidden textarea is accessible for mobile selection menu
@@ -606,6 +645,7 @@ function addQRCodeToCanvas() {
         qrModuleCount: moduleCount,
         lockUniScaling: true,
         lockScalingFlip: true,
+        alignment: 'center',
       });
 
       img.setControlsVisibility({ mtr: false });
@@ -852,6 +892,32 @@ function updateTextControls() {
   const qrControlsGroup = document.getElementById('qr-controls-group');
   const objectSpecificControlsBox = document.getElementById('object-specific-controls');
 
+  // Find all alignment buttons and update their highlights based on selected object
+  const hButtons = document.querySelectorAll("[onclick^='setTextAlign']");
+  const vButtons = document.querySelectorAll("[onclick^='setVerticalAlign']");
+
+  if (activeObject) {
+    const alignment = activeObject.alignment || null;
+    const verticalAlignment = activeObject.verticalAlignment || null;
+
+    hButtons.forEach(btn => {
+      const onclickAttr = btn.getAttribute('onclick') || '';
+      const match = onclickAttr.match(/'([^']+)'/);
+      const type = match ? match[1] : null;
+      btn.classList.toggle('active', type === alignment);
+    });
+
+    vButtons.forEach(btn => {
+      const onclickAttr = btn.getAttribute('onclick') || '';
+      const match = onclickAttr.match(/'([^']+)'/);
+      const type = match ? match[1] : null;
+      btn.classList.toggle('active', type === verticalAlignment);
+    });
+  } else {
+    hButtons.forEach(btn => btn.classList.remove('active'));
+    vButtons.forEach(btn => btn.classList.remove('active'));
+  }
+
   // Groups that are object-specific styling controls
   const textStylingGroups = [fontStyleGroup, textFormatGroup];
   const imageStylingGroup = imageControlsGroup;
@@ -862,8 +928,6 @@ function updateTextControls() {
   });
   if (imageStylingGroup) imageStylingGroup.style.display = 'none';
   if (qrControlsGroup) qrControlsGroup.style.display = 'none';
-
-  // The general controls (text input, alignment) are always visible based on the HTML structure.
 
   if (activeObject) {
     if (objectSpecificControlsBox) objectSpecificControlsBox.style.display = 'block';
@@ -1042,17 +1106,12 @@ window.fabricEditor = {
 
     const bounds = getPaddingBounds();
     const contentWidth = bounds.right - bounds.left;
-    let objectWidth;
+    const objectWidth = activeObject.getScaledWidth();
     let newLeft;
 
     if (activeObject.type === 'i-text') {
-      objectWidth = activeObject.getScaledWidth();
       // Set text alignment within the object's bounding box (for multi-line text)
       activeObject.set({ textAlign: alignment });
-    } else if (activeObject.type === 'image') {
-      objectWidth = activeObject.getScaledWidth();
-    } else {
-      return; // Not a text or image object, do nothing
     }
 
     // Adjust the object's left position to align it within the padding bounds
@@ -1069,8 +1128,9 @@ window.fabricEditor = {
       default:
         return;
     }
-    activeObject.set({ left: newLeft });
+    activeObject.set({ left: newLeft, alignment: alignment });
     canvas.renderAll();
+    updateTextControls();
   },
 
   setVerticalAlign: function (alignment) {
@@ -1079,16 +1139,8 @@ window.fabricEditor = {
 
     const bounds = getPaddingBounds();
     const contentHeight = bounds.bottom - bounds.top;
-    let objectHeight;
+    const objectHeight = activeObject.getScaledHeight();
     let newTop;
-
-    if (activeObject.type === 'i-text') {
-      objectHeight = activeObject.getScaledHeight();
-    } else if (activeObject.type === 'image') {
-      objectHeight = activeObject.getScaledHeight();
-    } else {
-      return; // Not a text or image object, do nothing
-    }
 
     switch (alignment) {
       case 'top':
@@ -1103,8 +1155,9 @@ window.fabricEditor = {
       default:
         return;
     }
-    activeObject.set({ top: newTop });
+    activeObject.set({ top: newTop, verticalAlignment: alignment });
     canvas.renderAll();
+    updateTextControls();
   },
 
   setFontFamily: function (fontFamily) {
@@ -1126,6 +1179,9 @@ window.fabricEditor = {
       });
       canvas.renderAll();
       updateTextControls(); // Update UI to reflect change
+      
+      // Auto-grow canvas width if the text overflows and width is unlocked
+      this.checkAndGrowCanvas();
     }
   },
 
@@ -1154,27 +1210,147 @@ window.fabricEditor = {
     return false;
   },
 
-  updateCanvasSize: function (width, height) {
+  checkAndGrowCanvas: function () {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    const wLockBtn = document.getElementById("widthLockBtn");
+    const isWidthUnlocked = !wLockBtn || !wLockBtn.classList.contains("locked");
+    if (!isWidthUnlocked) return;
+
+    const objWidth = activeObject.getScaledWidth();
+    const currentWidth = canvas.getWidth();
+    const paddingTotal = paddingState.left + paddingState.right;
+    
+    const availableWidth = currentWidth - paddingTotal;
+    if (objWidth > availableWidth) {
+      const newWidth = Math.round(paddingState.left + objWidth + paddingState.right);
+      
+      if (this.updateCanvasSize) {
+        this.updateCanvasSize(newWidth, canvas.getHeight(), true); // Skip scaling active object
+        
+        // Reposition based on alignment
+        const alignment = activeObject.alignment || 'center';
+        const newBounds = {
+          left: paddingState.left,
+          right: newWidth - paddingState.right
+        };
+        const newContentWidth = newBounds.right - newBounds.left;
+        
+        if (alignment === 'center') {
+          activeObject.set({ left: newBounds.left + (newContentWidth - objWidth) / 2 });
+        } else if (alignment === 'left') {
+          activeObject.set({ left: newBounds.left });
+        } else if (alignment === 'right') {
+          activeObject.set({ left: newBounds.right - objWidth });
+        }
+        
+        canvas.renderAll();
+        
+        // Update widthInput value in the editor
+        const widthInput = document.getElementById("widthInput");
+        if (widthInput) {
+          const dpm = window.getCurrentPrinterDpm ? window.getCurrentPrinterDpm() : 8;
+          widthInput.value = (newWidth / dpm).toFixed(1);
+        }
+        
+        if (window.saveCurrentSettings) {
+          window.saveCurrentSettings();
+        }
+      }
+    }
+  },
+
+  updateCanvasSize: function (width, height, skipScaling = false) {
     if (canvas) {
       const oldWidth = canvas.getWidth() || width;
       const oldHeight = canvas.getHeight() || height;
 
+      const oldBounds = {
+        left: paddingState.left,
+        top: paddingState.top,
+        right: oldWidth - paddingState.right,
+        bottom: oldHeight - paddingState.bottom
+      };
+
+      // Set new canvas size
       canvas.setWidth(width);
       canvas.setHeight(height);
 
-      // Bereken de schaalfactor op basis van de breedteverandering (belangrijkste voor labels)
+      const newBounds = {
+        left: paddingState.left,
+        top: paddingState.top,
+        right: width - paddingState.right,
+        bottom: height - paddingState.bottom
+      };
+      const newContentWidth = newBounds.right - newBounds.left;
+
       const scaleFactor = width / oldWidth;
+      const isEnlarging = width > oldWidth;
 
       canvas.getObjects().forEach(obj => {
         if (obj.paddingGuide || obj.excludeFromExport) return;
 
-        // Verschuif positie
-        obj.left *= scaleFactor;
-        obj.top *= (height / oldHeight); // Hoogte schaalt apart voor positie
+        const alignment = obj.alignment || null;
 
-        // Schaal het object zelf (proportioneel)
-        obj.scaleX *= scaleFactor;
-        obj.scaleY *= scaleFactor;
+        // 1. Resize object
+        if (!skipScaling) {
+          if (isEnlarging) {
+            // Scale up proportionally when enlarging
+            obj.scaleX *= scaleFactor;
+            obj.scaleY *= scaleFactor;
+          } else {
+            // When shrinking: only downscale if the object overflows the available content width
+            const objWidth = obj.getScaledWidth();
+            if (objWidth > newContentWidth) {
+              const fitScaleFactor = newContentWidth / objWidth;
+              obj.scaleX *= fitScaleFactor;
+              obj.scaleY *= fitScaleFactor;
+            }
+          }
+        }
+
+        // 2. Reposition vertically based on alignment
+        const objHeight = obj.getScaledHeight();
+        const verticalAlignment = obj.verticalAlignment;
+        const newContentHeight = newBounds.bottom - newBounds.top;
+
+        if (verticalAlignment === 'top') {
+          const offsetFromTop = obj.top - oldBounds.top;
+          obj.top = newBounds.top + offsetFromTop;
+        } else if (verticalAlignment === 'middle') {
+          obj.top = newBounds.top + (newContentHeight - objHeight) / 2;
+        } else if (verticalAlignment === 'bottom') {
+          const oldObjHeight = objHeight / (height / oldHeight);
+          const offsetFromBottom = oldBounds.bottom - (obj.top + oldObjHeight);
+          obj.top = newBounds.bottom - objHeight - offsetFromBottom;
+        } else {
+          // Default: scale position vertically
+          obj.top *= (height / oldHeight);
+        }
+
+        // 3. Reposition horizontally based on alignment
+        const objWidth = obj.getScaledWidth();
+        if (objWidth >= newContentWidth) {
+          obj.left = newBounds.left;
+        } else {
+          if (alignment === 'left') {
+            // Keep absolute distance from left margin constant
+            const offsetFromLeft = obj.left - oldBounds.left;
+            obj.left = newBounds.left + offsetFromLeft;
+          } else if (alignment === 'right') {
+            // Keep absolute distance from right margin constant
+            const oldObjWidth = objWidth / (isEnlarging ? scaleFactor : 1);
+            const offsetFromRight = oldBounds.right - (obj.left + oldObjWidth);
+            obj.left = newBounds.right - objWidth - offsetFromRight;
+          } else if (alignment === 'center') {
+            // Keep centered
+            obj.left = newBounds.left + (newContentWidth - objWidth) / 2;
+          } else {
+            // Scale position horizontally (no alignment association)
+            obj.left *= (width / oldWidth);
+          }
+        }
 
         obj.setCoords();
       });

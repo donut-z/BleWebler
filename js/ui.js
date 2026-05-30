@@ -366,6 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return currentPrinterDpm; // Fallback to stored value
   };
+  window.getCurrentPrinterDpm = getCurrentPrinterDpm;
 
   // Function to update dimension inputs from canvas
   const updateDimensionInputs = () => {
@@ -393,6 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (window.fabricEditor) {
           window.fabricEditor.updateCanvasSize(widthPx, heightPx);
         }
+        if (window.saveCurrentSettings) window.saveCurrentSettings();
       }
     }
   };
@@ -415,6 +417,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const onDrag = (clientX) => {
       if (!isDragging) return;
+      
+      // Stop drag if width is locked
+      const wLockBtn = document.getElementById("widthLockBtn");
+      if (wLockBtn && wLockBtn.classList.contains("locked")) return;
+
       const dx = clientX - startX;
       const newWidth = startWidth + dx;
 
@@ -434,6 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const endDrag = () => {
       isDragging = false;
       resizeHandle.classList.remove('active');
+      if (window.saveCurrentSettings) window.saveCurrentSettings();
     };
 
     // Mouse events
@@ -496,10 +504,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Helper to update resize handle visually if both dimensions are locked
+  function updateResizeHandleState() {
+    window.updateResizeHandleState = updateResizeHandleState;
+    const wLockBtn = document.getElementById("widthLockBtn");
+    const hLockBtn = document.getElementById("heightLockBtn");
+    const resizeHandle = document.getElementById("resizeHandle");
+    
+    if (!resizeHandle) return;
+    
+    const isWidthLocked = wLockBtn && wLockBtn.classList.contains("locked");
+    const isHeightLocked = hLockBtn && hLockBtn.classList.contains("locked");
+    
+    if (isWidthLocked && isHeightLocked) {
+      resizeHandle.classList.add("disabled");
+      resizeHandle.title = "Zowel Width als Height zijn vergrendeld";
+    } else {
+      resizeHandle.classList.remove("disabled");
+      resizeHandle.title = "Sleep om breedte aan te passen";
+    }
+  }
+
   // Height Lock Toggle Logic
   window.toggleHeightLock = function() {
     const hInput = document.getElementById("heightInput");
     const lockBtn = document.getElementById("heightLockBtn");
+    if (!hInput || !lockBtn) return;
     const lockIcon = lockBtn.querySelector("path");
     
     const isLocked = lockBtn.classList.contains("locked");
@@ -521,6 +551,36 @@ document.addEventListener("DOMContentLoaded", () => {
       // SVG path for locked
       lockIcon.setAttribute("d", "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10z");
     }
+    updateResizeHandleState();
+  };
+
+  // Width Lock Toggle Logic
+  window.toggleWidthLock = function() {
+    const wInput = document.getElementById("widthInput");
+    const lockBtn = document.getElementById("widthLockBtn");
+    if (!wInput || !lockBtn) return;
+    const lockIcon = lockBtn.querySelector("path");
+    
+    const isLocked = lockBtn.classList.contains("locked");
+    
+    if (isLocked) {
+      // Unlock
+      lockBtn.classList.remove("locked");
+      lockBtn.classList.add("unlocked");
+      lockBtn.title = "Lock Width";
+      wInput.disabled = false;
+      // SVG path for unlocked
+      lockIcon.setAttribute("d", "M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5-2.28 0-4.27 1.54-4.84 3.59.04.13.11.23.23.28l1.3.43c.12.04.25.02.34-.06.28-.24.59-.44.93-.57.65-.24 1.35-.26 2.04-.05 1.11.35 1.94 1.3 2.13 2.46.06.39.06.77.01 1.15H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM6 20V10h12v10H6z");
+    } else {
+      // Lock
+      lockBtn.classList.add("locked");
+      lockBtn.classList.remove("unlocked");
+      lockBtn.title = "Unlock Width";
+      wInput.disabled = true;
+      // SVG path for locked
+      lockIcon.setAttribute("d", "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10z");
+    }
+    updateResizeHandleState();
   };
 
   if (startupModal && printerSelect && startBtn) {
@@ -543,19 +603,10 @@ document.addEventListener("DOMContentLoaded", () => {
         currentPrinterDpm = dpm;
 
         // Calculate pixels
-        let widthPx;
-        if (isInfinite) {
-          widthPx = Math.round((widthMm || 100) * dpm);
-          if (resizeHandle) resizeHandle.classList.remove('hidden');
-          if (dimensionControls) dimensionControls.classList.remove('hidden');
-        } else {
-          widthPx = Math.round(widthMm * dpm);
-          if (resizeHandle) resizeHandle.classList.add('hidden');
-          if (dimensionControls) dimensionControls.classList.add('hidden');
-        }
+        let widthPx = Math.round(widthMm * dpm);
+        let heightPx = Math.round(heightMm * dpm);
 
         // Cap height at printer's max printable height
-        let heightPx = Math.round(heightMm * dpm);
         if (heightPx > printer.px) {
           heightPx = printer.px;
         }
@@ -580,6 +631,7 @@ document.addEventListener("DOMContentLoaded", () => {
         startupModal.classList.remove("show");
       }
     };
+    window.applyPrinterSettings = applyPrinterSettings;
 
     // Get padding inputs
     const paddingTopInput = document.getElementById('paddingTop');
@@ -598,27 +650,69 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlPaddingLeft = urlParams.get('paddingLeft');
     const urlPaddingRight = urlParams.get('paddingRight');
 
-    // Infinite Paper Checkbox Logic
-    if (infinitePaperCheckbox && paperWidthInput && paperWidthContainer) {
-      infinitePaperCheckbox.addEventListener("change", (e) => {
-        if (e.target.checked) {
-          paperWidthInput.removeAttribute("max");
-          paperWidthContainer.style.display = 'none'; // Hide width input
-          if (resizeHandle) resizeHandle.classList.remove('hidden');
-          if (dimensionControls) dimensionControls.classList.remove('hidden');
-          // Update dimension inputs when enabling infinite paper
-          updateDimensionInputs();
+    // Helper to programmatically set width lock state
+    const setWidthLockState = (isInfinite) => {
+      const widthLockBtn = document.getElementById("widthLockBtn");
+      const wInput = document.getElementById("widthInput");
+      if (widthLockBtn && wInput) {
+        if (isInfinite) {
+          widthLockBtn.classList.remove("locked");
+          widthLockBtn.classList.add("unlocked");
+          wInput.disabled = false;
         } else {
-          paperWidthInput.setAttribute("max", "100"); // Restore default max
-          if (parseFloat(paperWidthInput.value) > 100) {
-            paperWidthInput.value = 100; // Cap value if it exceeds max
-          }
-          paperWidthContainer.style.display = 'block'; // Show width input
-          if (resizeHandle) resizeHandle.classList.add('hidden');
-          if (dimensionControls) dimensionControls.classList.add('hidden');
+          widthLockBtn.classList.add("locked");
+          widthLockBtn.classList.remove("unlocked");
+          wInput.disabled = true;
         }
-      });
-    }
+        updateResizeHandleState();
+      }
+    };
+
+    // Global function to preserve settings automatically
+    window.saveCurrentSettings = () => {
+      const printerIndex = printerSelect.value;
+      const widthLockBtn = document.getElementById("widthLockBtn");
+      const infinite = widthLockBtn ? !widthLockBtn.classList.contains("locked") : true;
+      const dpm = getCurrentPrinterDpm();
+      const canvas = window.getFabricCanvas();
+      if (!canvas) return;
+      
+      const widthMm = parseFloat(widthInput.value) || (canvas.getWidth() / dpm);
+      const heightMm = parseFloat(heightInput.value) || (canvas.getHeight() / dpm);
+      
+      const paddingTopMm = paddingTopInput ? parseFloat(paddingTopInput.value) || 0 : 0;
+      const paddingBottomMm = paddingBottomInput ? parseFloat(paddingBottomInput.value) || 0 : 0;
+      const paddingLeftMm = paddingLeftInput ? parseFloat(paddingLeftInput.value) || 0 : 0;
+      const paddingRightMm = paddingRightInput ? parseFloat(paddingRightInput.value) || 0 : 0;
+      
+      // Keep startup modal inputs synchronized with current editor values
+      if (paperWidthInput) paperWidthInput.value = widthMm.toFixed(1);
+      if (paperHeightInput) paperHeightInput.value = heightMm.toFixed(1);
+      
+      // Update URL search parameters
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('printer', printerIndex);
+      newUrl.searchParams.set('width', widthMm.toFixed(1));
+      newUrl.searchParams.set('height', heightMm.toFixed(1));
+      newUrl.searchParams.set('infinite', infinite);
+      newUrl.searchParams.set('paddingTop', paddingTopMm);
+      newUrl.searchParams.set('paddingBottom', paddingBottomMm);
+      newUrl.searchParams.set('paddingLeft', paddingLeftMm);
+      newUrl.searchParams.set('paddingRight', paddingRightMm);
+      window.history.replaceState({}, '', newUrl);
+      
+      // Save settings in localStorage
+      localStorage.setItem('blewebler_settings', JSON.stringify({
+        printer: printerIndex,
+        width: widthMm,
+        height: heightMm,
+        infinite: infinite,
+        paddingTop: paddingTopMm,
+        paddingBottom: paddingBottomMm,
+        paddingLeft: paddingLeftMm,
+        paddingRight: paddingRightMm
+      }));
+    };
 
     if (urlPrinter !== null && urlWidth !== null && urlHeight !== null) {
       // Apply settings from URL
@@ -631,11 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
         printerSelect.value = pIndex;
         paperWidthInput.value = w;
         paperHeightInput.value = h;
-        if (infinitePaperCheckbox) {
-          infinitePaperCheckbox.checked = urlInfinite;
-          // Trigger change event to update UI state (hide/show width input)
-          infinitePaperCheckbox.dispatchEvent(new Event('change'));
-        }
+        setWidthLockState(urlInfinite);
 
         // Update padding inputs from URL
         const pTop = urlPaddingTop !== null ? parseFloat(urlPaddingTop) : 0;
@@ -661,10 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
         printerSelect.value = s.printer;
         paperWidthInput.value = s.width;
         paperHeightInput.value = s.height;
-        if (infinitePaperCheckbox) {
-          infinitePaperCheckbox.checked = s.infinite;
-          infinitePaperCheckbox.dispatchEvent(new Event('change'));
-        }
+        setWidthLockState(s.infinite);
         if (paddingTopInput) paddingTopInput.value = s.paddingTop;
         if (paddingBottomInput) paddingBottomInput.value = s.paddingBottom;
         if (paddingLeftInput) paddingLeftInput.value = s.paddingLeft;
@@ -672,11 +759,8 @@ document.addEventListener("DOMContentLoaded", () => {
         applyPrinterSettings(s.printer, s.width, s.height, s.infinite,
           s.paddingTop, s.paddingBottom, s.paddingLeft, s.paddingRight);
       } else {
-        // Eerste keer, toon modal en zet infinite paper standaard aan
-        if (infinitePaperCheckbox) {
-          infinitePaperCheckbox.checked = true;
-          infinitePaperCheckbox.dispatchEvent(new Event('change'));
-        }
+        // Eerste keer, toon modal en ontgrendel breedte standaard
+        setWidthLockState(true);
         startupModal.classList.add("show");
       }
     }
@@ -845,6 +929,7 @@ window.addDateTemplate = function() {
 
   canvas.add(text);
   text.center(); // Centreer op het huidige canvas
+  text.set({ alignment: 'center', verticalAlignment: 'middle' });
   canvas.setActiveObject(text);
 
   // Support mobile selection menu
@@ -857,3 +942,18 @@ window.addDateTemplate = function() {
   canvas.renderAll();
   console.log("Date added and scaled to fit current label.");
 }
+
+window.toggleTemplatesAccordion = function() {
+  const container = document.getElementById('templatesAccordion');
+  const content = document.getElementById('templatesAccordionContent');
+  if (!container || !content) return;
+  
+  const isOpen = container.classList.contains('active');
+  if (isOpen) {
+    container.classList.remove('active');
+    content.style.display = 'none';
+  } else {
+    container.classList.add('active');
+    content.style.display = 'block';
+  }
+};
