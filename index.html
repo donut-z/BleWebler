@@ -517,10 +517,13 @@
         </p>
 
         <div class="form-group" style="margin-bottom: var(--spacing-md);">
-          <label for="githubPat" style="display: block; font-weight: 500; font-size: 0.85rem; margin-bottom: 4px;">GitHub Personal Access Token (PAT):</label>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label for="githubPat" style="font-weight: 500; font-size: 0.85rem; margin-bottom: 4px;">GitHub Personal Access Token (PAT):</label>
+            <a href="https://github.com/settings/tokens/new?description=BleWebler%20Templates&amp;scopes=gist" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-dark)'" onmouseout="this.style.color='var(--primary)'">Genereer Token Snelle Link ↗</a>
+          </div>
           <input type="password" id="githubPat" placeholder="ghp_..." style="width: 100%;">
           <p class="helper-text" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.3;">
-            Maak een token aan op GitHub onder <em>Settings > Developer Settings > Personal Access Tokens (classic)</em> met minimaal de <strong>gist</strong> scope.
+            Maak een token aan met de <strong>gist</strong> scope. Gebruik de snelle link hierboven om deze direct met de juiste instellingen aan te maken op GitHub.
           </p>
         </div>
 
