@@ -25,12 +25,27 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchTemplates();
 });
 
+// Update GitHub icon color based on connection status
+function updateGithubIconStatus() {
+  const headerGithubIcon = document.getElementById('headerGithubIcon');
+  if (!headerGithubIcon) return;
+  
+  if (githubSettings.pat && githubSettings.gistId) {
+    headerGithubIcon.classList.remove('disconnected');
+    headerGithubIcon.classList.add('connected');
+  } else {
+    headerGithubIcon.classList.remove('connected');
+    headerGithubIcon.classList.add('disconnected');
+  }
+}
+
 // Load settings from localStorage
 function loadGithubSettings() {
   const saved = localStorage.getItem('blewebler_github_settings');
   if (saved) {
     githubSettings = JSON.parse(saved);
   }
+  updateGithubIconStatus();
 }
 
 // Save settings to localStorage
@@ -38,6 +53,7 @@ function saveGithubSettings(pat, gistId) {
   githubSettings.pat = pat ? pat.trim() : '';
   githubSettings.gistId = gistId ? gistId.trim() : '';
   localStorage.setItem('blewebler_github_settings', JSON.stringify(githubSettings));
+  updateGithubIconStatus();
 }
 
 // Built-in default templates (empty by user request)
@@ -372,25 +388,32 @@ function initTemplateUI() {
   // GitHub Modal Setup
   const githubModal = document.getElementById('githubModal');
   const githubSettingsBtn = document.getElementById('githubSettingsBtn');
+  const headerGithubSettingsBtn = document.getElementById('headerGithubSettingsBtn');
   const closeGithubModal = document.getElementById('closeGithubModal');
   const saveGithubSettingsBtn = document.getElementById('saveGithubSettingsBtn');
   const createGistBtn = document.getElementById('createGistBtn');
   
   const githubPatInput = document.getElementById('githubPat');
   const githubGistIdInput = document.getElementById('githubGistId');
-  
+
+  const openGithubModal = () => {
+    if (githubPatInput) githubPatInput.value = githubSettings.pat || '';
+    if (githubGistIdInput) githubGistIdInput.value = githubSettings.gistId || '';
+    
+    // Toggle create Gist button visibility
+    if (createGistBtn) {
+      createGistBtn.style.display = (githubSettings.pat && !githubSettings.gistId) ? 'inline-flex' : 'none';
+    }
+    
+    githubModal.classList.add('show');
+  };
+
   if (githubSettingsBtn && githubModal) {
-    githubSettingsBtn.addEventListener('click', () => {
-      if (githubPatInput) githubPatInput.value = githubSettings.pat || '';
-      if (githubGistIdInput) githubGistIdInput.value = githubSettings.gistId || '';
-      
-      // Toggle create Gist button visibility
-      if (createGistBtn) {
-        createGistBtn.style.display = (githubSettings.pat && !githubSettings.gistId) ? 'inline-flex' : 'none';
-      }
-      
-      githubModal.classList.add('show');
-    });
+    githubSettingsBtn.addEventListener('click', openGithubModal);
+  }
+  
+  if (headerGithubSettingsBtn && githubModal) {
+    headerGithubSettingsBtn.addEventListener('click', openGithubModal);
   }
   
   if (closeGithubModal && githubModal) {
@@ -472,6 +495,29 @@ function initTemplateUI() {
     saveGithubSettingsBtn.addEventListener('click', async () => {
       const pat = githubPatInput ? githubPatInput.value.trim() : '';
       let gistId = githubGistIdInput ? githubGistIdInput.value.trim() : '';
+      
+      if (pat && !gistId) {
+        // Try to auto-discover an existing Gist containing our templates
+        try {
+          const response = await fetch('https://api.github.com/gists', {
+            headers: {
+              'Accept': 'application/vnd.github.v3+json',
+              'Authorization': `token ${pat}`
+            }
+          });
+          if (response.ok) {
+            const gists = await response.json();
+            const existingGist = gists.find(g => g.files && g.files[DEFAULT_GIST_FILENAME]);
+            if (existingGist) {
+              gistId = existingGist.id;
+              if (githubGistIdInput) githubGistIdInput.value = gistId;
+              alert("Bestaand sjablonenbestand gevonden op GitHub en automatisch gekoppeld!");
+            }
+          }
+        } catch (err) {
+          console.error("Auto-discovery failed:", err);
+        }
+      }
       
       saveGithubSettings(pat, gistId);
       githubModal.classList.remove('show');

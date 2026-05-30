@@ -943,7 +943,11 @@ window.addDateTemplate = function() {
   console.log("Date added and scaled to fit current label.");
 }
 
-window.toggleTemplatesAccordion = function() {
+window.toggleTemplatesAccordion = function(event) {
+  // If the user clicked on an action button (or an icon inside it) in the header, ignore the toggle!
+  if (event && (event.target.closest('#headerSaveTemplateBtn') || event.target.closest('#headerGithubSettingsBtn'))) {
+    return;
+  }
   const container = document.getElementById('templatesAccordion');
   const content = document.getElementById('templatesAccordionContent');
   if (!container || !content) return;

@@ -854,3 +854,50 @@ input:checked + .slider:before {
   padding-top: var(--spacing-md);
   transition: all 0.3s ease;
 }
+
+.accordion-action-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.accordion-action-btn:hover {
+  background-color: var(--bg-body);
+}
+
+.accordion-action-btn:hover svg {
+  color: var(--primary);
+}
+
+.accordion-action-btn svg {
+  width: 1.45rem;
+  height: 1.45rem;
+  transition: color 0.2s ease;
+}
+
+/* GitHub Status Colors */
+.github-status-icon.connected {
+  color: var(--primary) !important; /* Blue */
+}
+
+.github-status-icon.disconnected {
+  color: var(--text-muted) !important; /* Normal icon color */
+}
+
+.github-status-icon.connected .github-slash {
+  display: none;
+}
+
+.github-status-icon.disconnected .github-slash {
+  display: inline;
+  stroke: currentColor !important;
+}
