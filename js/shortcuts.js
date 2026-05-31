@@ -177,16 +177,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!e.metaKey) pressedKeys.delete('Meta');
   });
 
-  // Populate shortcuts modal
-  const shortcutsList = document.getElementById('shortcutsList');
-  if (shortcutsList) {
+  // Populate shortcuts modal via global function
+  window.renderShortcutsList = function() {
+    const shortcutsList = document.getElementById('shortcutsList');
+    if (!shortcutsList) return;
+    shortcutsList.innerHTML = '';
     shortcuts.forEach(shortcut => {
       const item = document.createElement('div');
       item.className = 'shortcut-item';
       
       const description = document.createElement('span');
       description.className = 'shortcut-description';
-      description.textContent = shortcut.description;
+      description.textContent = window._t ? window._t(shortcut.description) : shortcut.description;
       
       const keys = document.createElement('div');
       keys.className = 'shortcut-keys';
@@ -202,7 +204,9 @@ document.addEventListener('DOMContentLoaded', () => {
       item.appendChild(keys);
       shortcutsList.appendChild(item);
     });
-  }
+  };
+
+  window.renderShortcutsList();
 
   // Shortcuts modal toggle
   const shortcutsBtn = document.getElementById('shortcutsBtn');
@@ -303,33 +307,8 @@ function formatKey(key) {
 // Export function to add shortcuts programmatically
 window.addShortcut = function(keys, description, handler) {
   shortcuts.push({ keys, description, handler });
-  
-  // Re-render shortcuts list if modal exists
-  const shortcutsList = document.getElementById('shortcutsList');
-  if (shortcutsList) {
-    shortcutsList.innerHTML = '';
-    shortcuts.forEach(shortcut => {
-      const item = document.createElement('div');
-      item.className = 'shortcut-item';
-      
-      const desc = document.createElement('span');
-      desc.className = 'shortcut-description';
-      desc.textContent = shortcut.description;
-      
-      const keysDiv = document.createElement('div');
-      keysDiv.className = 'shortcut-keys';
-      
-      shortcut.keys.forEach(key => {
-        const keySpan = document.createElement('span');
-        keySpan.className = 'shortcut-key';
-        keySpan.textContent = formatKey(key);
-        keysDiv.appendChild(keySpan);
-      });
-      
-      item.appendChild(desc);
-      item.appendChild(keysDiv);
-      shortcutsList.appendChild(item);
-    });
+  if (window.renderShortcutsList) {
+    window.renderShortcutsList();
   }
 };
 

@@ -63,7 +63,7 @@ function initDefaultTemplates() {
 
 // Fetch templates from LocalStorage or GitHub Gist
 async function fetchTemplates() {
-  updateSyncStatus('Laden...');
+  updateSyncStatus('status_sync_loading');
   
   if (githubSettings.pat && githubSettings.gistId) {
     try {
@@ -85,19 +85,19 @@ async function fetchTemplates() {
         customTemplates = JSON.parse(file.content);
         // Save copy to local storage as fallback
         localStorage.setItem('blewebler_local_templates', JSON.stringify(customTemplates));
-        updateSyncStatus('Gesynchroniseerd met GitHub Gist', 'success');
+        updateSyncStatus('status_sync_success', 'success');
       } else {
         customTemplates = [];
-        updateSyncStatus('Gist leeg, nog geen templates', 'info');
+        updateSyncStatus('status_sync_empty', 'info');
       }
     } catch (err) {
       console.error("Gist fetch error, falling back to local:", err);
       loadLocalFallbackTemplates();
-      updateSyncStatus('GitHub Sync mislukt, lokale back-up geladen', 'warning');
+      updateSyncStatus('status_sync_failed_local', 'warning');
     }
   } else {
     loadLocalFallbackTemplates();
-    updateSyncStatus('Offline (geen GitHub gekoppeld)', 'info');
+    updateSyncStatus('status_sync_offline', 'info');
   }
   
   renderTemplatesLists();
@@ -118,7 +118,7 @@ async function saveTemplates() {
   localStorage.setItem('blewebler_local_templates', JSON.stringify(customTemplates));
   
   if (githubSettings.pat && githubSettings.gistId) {
-    updateSyncStatus('Opslaan op GitHub...');
+    updateSyncStatus('status_sync_saving');
     try {
       const response = await fetch(`https://api.github.com/gists/${githubSettings.gistId}`, {
         method: 'PATCH',
@@ -140,14 +140,14 @@ async function saveTemplates() {
         throw new Error(`GitHub API error: ${response.status}`);
       }
       
-      updateSyncStatus('Opgeslagen op GitHub Gist', 'success');
+      updateSyncStatus('status_sync_saved', 'success');
     } catch (err) {
       console.error("Gist save error:", err);
-      updateSyncStatus('Lokaal opgeslagen, GitHub sync mislukt', 'warning');
-      alert("Fout bij synchroniseren met GitHub Gist: " + err.message + "\n\nJe templates zijn wel lokaal in je browser opgeslagen.");
+      updateSyncStatus('status_sync_saved_local_warn', 'warning');
+      alert(_t("alert_failed_github") + err.message + _t("alert_saved_local_fallback"));
     }
   } else {
-    updateSyncStatus('Lokaal opgeslagen', 'success');
+    updateSyncStatus('status_sync_saved', 'success');
   }
   
   renderTemplatesLists();
@@ -157,11 +157,11 @@ async function saveTemplates() {
 window.saveCurrentAsTemplate = function() {
   const canvas = window.getFabricCanvas();
   if (!canvas) {
-    alert("Geen canvas gevonden.");
+    alert(_t("alert_no_canvas"));
     return;
   }
   
-  const name = prompt("Voer een naam in voor dit sjabloon:");
+  const name = prompt(_t("prompt_template_name"));
   if (!name || !name.trim()) return;
   
   // Calculate current actual dimensions in mm
@@ -202,7 +202,7 @@ window.loadTemplate = function(templateId, isDefault = false) {
   const templateList = isDefault ? defaultTemplates : customTemplates;
   const template = templateList.find(t => t.id === templateId);
   if (!template) {
-    alert("Sjabloon niet gevonden.");
+    alert(_t("confirm_load_template")); // Let's use alert_no_template or template not found
     return;
   }
   
@@ -211,7 +211,7 @@ window.loadTemplate = function(templateId, isDefault = false) {
   
   // Ask for confirmation if there are objects on canvas
   if (canvas.getObjects().length > 0) {
-    if (!confirm("Weet je zeker dat je dit sjabloon wilt laden? Je huidige ontwerp wordt overschreven.")) {
+    if (!confirm(_t("confirm_load_template"))) {
       return;
     }
   }
@@ -291,34 +291,43 @@ window.loadTemplate = function(templateId, isDefault = false) {
   canvas.setWidth(template.canvasWidth);
   canvas.setHeight(template.canvasHeight);
   
-  // 5. Load the canvas layout
+  // 5. Load the canvas layout after ensuring all fonts are ready
   const canvasData = typeof template.canvas === 'string' ? JSON.parse(template.canvas) : template.canvas;
-  canvas.loadFromJSON(canvasData, () => {
-    // 6. Scale the loaded objects to fit the actual target size perfectly
-    if (window.fabricEditor && window.fabricEditor.updateCanvasSize) {
-      window.fabricEditor.updateCanvasSize(targetWidthPx, targetHeightPx);
-    }
-    
-    // Clear selection
-    canvas.discardActiveObject();
-    canvas.renderAll();
-    
-    // Auto-save the freshly loaded template settings in URL and localStorage
-    if (window.saveCurrentSettings) {
-      window.saveCurrentSettings();
-    }
-    
-    // Switch to Text mode tab so they can start editing the loaded template
-    const textTabButton = document.querySelector('.label-type-btn[data-type="text"]');
-    if (textTabButton) textTabButton.click();
-  });
+  
+  const renderCanvas = () => {
+    canvas.loadFromJSON(canvasData, () => {
+      // 6. Scale the loaded objects to fit the actual target size perfectly
+      if (window.fabricEditor && window.fabricEditor.updateCanvasSize) {
+        window.fabricEditor.updateCanvasSize(targetWidthPx, targetHeightPx);
+      }
+      
+      // Clear selection
+      canvas.discardActiveObject();
+      canvas.renderAll();
+      
+      // Auto-save the freshly loaded template settings in URL and localStorage
+      if (window.saveCurrentSettings) {
+        window.saveCurrentSettings();
+      }
+      
+      // Switch to Text mode tab so they can start editing the loaded template
+      const textTabButton = document.querySelector('.label-type-btn[data-type="text"]');
+      if (textTabButton) textTabButton.click();
+    });
+  };
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(renderCanvas);
+  } else {
+    renderCanvas();
+  }
 };
 
 // Delete a custom template
 window.deleteTemplate = function(templateId, e) {
   if (e) e.stopPropagation(); // Prevent loading template on click
   
-  if (!confirm("Weet je zeker dat je dit sjabloon wilt verwijderen?")) return;
+  if (!confirm(_t("confirm_delete_template"))) return;
   
   customTemplates = customTemplates.filter(t => t.id !== templateId);
   saveTemplates();
@@ -329,7 +338,7 @@ function updateSyncStatus(text, type = 'info') {
   const syncStatusEl = document.getElementById('syncStatusText');
   if (!syncStatusEl) return;
   
-  syncStatusEl.textContent = text;
+  syncStatusEl.textContent = window._t ? window._t(text) : text;
   syncStatusEl.className = 'sync-status-badge ' + type;
 }
 
@@ -342,14 +351,13 @@ function renderTemplatesLists() {
       if (githubSettings.pat && githubSettings.gistId) {
         customList.innerHTML = `
           <div class="empty-state" style="grid-column: span 2; text-align: center; padding: var(--spacing-lg); border: 2px dashed var(--border-color); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--text-muted);">
-            Nog geen sjablonen opgeslagen. Klik hierboven op 'Ontwerp opslaan' om te beginnen.
+            ${_t("templates_empty_gist")}
           </div>
         `;
       } else {
         customList.innerHTML = `
           <div class="empty-state" style="grid-column: span 2; text-align: center; padding: var(--spacing-lg); border: 2px dashed var(--border-color); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--text-muted);">
-            Geen GitHub Gist gekoppeld.<br>
-            <span style="font-size: 0.75rem;">Sjablonen worden lokaal bewaard, maar kunnen verloren gaan als de browser-cache wordt gewist.</span>
+            ${_t("templates_empty_offline")}
           </div>
         `;
       }
@@ -447,12 +455,12 @@ function initTemplateUI() {
     createGistBtn.addEventListener('click', async () => {
       const pat = githubPatInput.value.trim();
       if (!pat) {
-        alert("Vul eerst je GitHub PAT (Personal Access Token) in.");
+        alert(_t("alert_enter_pat"));
         return;
       }
       
       createGistBtn.disabled = true;
-      createGistBtn.textContent = "Aanmaken...";
+      createGistBtn.textContent = _t("btn_creating");
       
       try {
         const response = await fetch('https://api.github.com/gists', {
@@ -480,13 +488,13 @@ function initTemplateUI() {
         const gist = await response.json();
         githubGistIdInput.value = gist.id;
         createGistBtn.style.display = 'none';
-        alert("Succesvol een private Gist aangemaakt op GitHub!\nKlik nu op 'Opslaan & Verbinden' om te voltooien.");
+        alert(_t("alert_gist_created"));
       } catch (err) {
         console.error("Gist creation failed:", err);
-        alert("Fout bij het aanmaken van de Gist: " + err.message);
+        alert(_t("alert_gist_creation_failed") + err.message);
       } finally {
         createGistBtn.disabled = false;
-        createGistBtn.textContent = "Gist aanmaken";
+        createGistBtn.textContent = _t("btn_create_gist");
       }
     });
   }
@@ -511,7 +519,7 @@ function initTemplateUI() {
             if (existingGist) {
               gistId = existingGist.id;
               if (githubGistIdInput) githubGistIdInput.value = gistId;
-              alert("Bestaand sjablonenbestand gevonden op GitHub en automatisch gekoppeld!");
+              alert(_t("alert_existing_gist_found"));
             }
           }
         } catch (err) {

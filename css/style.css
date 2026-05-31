@@ -86,7 +86,7 @@ body {
 }
 
 header {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
 }
 
 .header-content {
@@ -96,46 +96,43 @@ header {
   gap: var(--spacing-md);
 }
 
-.header-left,
-.header-right {
-  flex: 1;
-  display: flex;
+.header-left {
+  display: none;
 }
 
 .header-right {
+  display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
 }
 
 .header-title-group {
-  text-align: center;
-  flex: 0 0 auto;
-}
-
-@media (max-width: 480px) {
-  .header-content {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-sm);
-  }
-  .header-left { display: none; }
-  .header-right { order: -1; width: 100%; justify-content: center; }
+  text-align: left;
 }
 
 h1 {
-  font-size: 2.25rem;
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, var(--primary), #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.25rem;
+  }
 }
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  margin: 0;
 }
 
 .subtitle a {
@@ -148,11 +145,6 @@ h1 {
 .subtitle a:hover {
   border-bottom-color: var(--primary);
   opacity: 0.8;
-}
-
-.header-right {
-  display: flex;
-  gap: var(--spacing-sm);
 }
 
 /* =========================================
@@ -251,6 +243,17 @@ textarea:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+#fontFamilyInput {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 20 12 4 20 20'%3E%3C/polyline%3E%3Cline x1='6' y1='16' x2='18' y2='16'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+  background-size: 16px 16px;
+  padding-right: var(--spacing-xl);
 }
 
 /* Label Selector (Tabs) */

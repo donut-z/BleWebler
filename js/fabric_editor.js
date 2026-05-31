@@ -491,7 +491,7 @@ function addTextToCanvas() {
 
   const newText = new fabric.IText(textContent, {
     left: bounds.left,
-    fontFamily: fontFamilyInput.value || 'Verdana', // Use fontFamilySelect
+    fontFamily: fontFamilyInput.value || 'Inter', // Use fontFamilySelect
     fontSize: parseFloat(fontSizeInput.value) || 40,
     fill: '#000000',
     fontWeight: 'bold', // Default to normal, will be set by toggleStyle if active
@@ -1080,7 +1080,7 @@ function updateTextControls() {
 function clearTextControls() {
   // Reset to default or clear when no text object is selected
   fontSizeInput.value = '40';
-  fontFamilyInput.value = 'Verdana';
+  fontFamilyInput.value = 'Inter';
   document.querySelectorAll('.toggle-btn').forEach(button => {
     button.classList.remove('active');
   });
@@ -1216,13 +1216,42 @@ window.fabricEditor = {
 
     const wLockBtn = document.getElementById("widthLockBtn");
     const isWidthUnlocked = !wLockBtn || !wLockBtn.classList.contains("locked");
-    if (!isWidthUnlocked) return;
 
     const objWidth = activeObject.getScaledWidth();
     const currentWidth = canvas.getWidth();
     const paddingTotal = paddingState.left + paddingState.right;
-    
     const availableWidth = currentWidth - paddingTotal;
+
+    if (!isWidthUnlocked) {
+      // Width is locked: auto-shrink text if it overflows the available content width
+      if (objWidth > availableWidth) {
+        const shrinkFactor = availableWidth / objWidth;
+        activeObject.set({
+          scaleX: activeObject.scaleX * shrinkFactor,
+          scaleY: activeObject.scaleY * shrinkFactor
+        });
+
+        // Reposition based on alignment
+        const newObjWidth = activeObject.getScaledWidth();
+        const alignment = activeObject.alignment || 'center';
+        const bounds = {
+          left: paddingState.left,
+          right: currentWidth - paddingState.right
+        };
+
+        if (alignment === 'center') {
+          activeObject.set({ left: bounds.left + (availableWidth - newObjWidth) / 2 });
+        } else if (alignment === 'left') {
+          activeObject.set({ left: bounds.left });
+        } else if (alignment === 'right') {
+          activeObject.set({ left: bounds.right - newObjWidth });
+        }
+
+        canvas.renderAll();
+      }
+      return;
+    }
+
     if (objWidth > availableWidth) {
       const newWidth = Math.round(paddingState.left + objWidth + paddingState.right);
       

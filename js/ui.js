@@ -7,11 +7,11 @@ function toggleAdvanced() {
   
   if (isHidden) {
     section.style.display = "block";
-    toggleButton.querySelector(".toggle-text").textContent = "Hide Advanced";
+    toggleButton.querySelector(".toggle-text").textContent = _t("hide_advanced");
     if (chevron) chevron.style.transform = "rotate(180deg)";
   } else {
     section.style.display = "none";
-    toggleButton.querySelector(".toggle-text").textContent = "Show Advanced";
+    toggleButton.querySelector(".toggle-text").textContent = _t("show_advanced");
     if (chevron) chevron.style.transform = "rotate(0deg)";
   }
 }
@@ -40,7 +40,6 @@ function updateFontSize(fontSize) {
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll(".label-type-btn");
   const fontFamilyInput = document.getElementById("fontFamilyInput");
-  const fontList = document.getElementById("fontList");
   const loadSystemFontsBtn = document.getElementById("loadSystemFontsBtn");
   const fontSizeInput = document.getElementById("fontSize");
   const noBluetoothModal = document.getElementById("noBluetoothModal");
@@ -59,13 +58,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Basic web-safe fonts
-   const basicFonts = [
-    // Web-safe (altijd beschikbaar)
-    "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact", "Courier New",
-    // Google Fonts (labelprinter-vriendelijk)
-    "Roboto", "Inter", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed", "Open Sans", "Montserrat"
-   ];
+  // Basic web-safe and Google fonts
+  const basicFonts = [
+    // Google Fonts (labelprinter-vriendelijk & universeel consistent)
+    "Inter", "Roboto", "Roboto Mono", "Noto Sans", "DM Sans", "Barlow", "Barlow Condensed", "Open Sans", "Montserrat",
+    // Web-safe (altijd beschikbaar op desktop, fallback op mobiel)
+    "Arial", "Arial Rounded MT Bold", "Verdana", "Tahoma", "Trebuchet MS", "Impact", "Courier New"
+  ];
+
+  // Metadata with uniformity and width indicators for the datalist options
+  const fontMetadata = {
+    "Inter": "uniform",
+    "Roboto": "uniform",
+    "Roboto Mono": "monospace & uniform",
+    "Noto Sans": "uniform",
+    "DM Sans": "uniform",
+    "Barlow": "uniform",
+    "Barlow Condensed": "condensed & uniform",
+    "Courier New": "monospace & uniform",
+    "Arial": "uniform",
+    "Verdana": "uniform"
+  };
 
   // Event listeners for toggle buttons
   document.querySelectorAll('.toggle-btn').forEach(button => {
@@ -79,17 +92,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function populateFontDropdown(fonts) {
-    fontList.innerHTML = ""; // Clear existing options
+    fontFamilyInput.innerHTML = ""; // Clear existing options in select element
     fonts.forEach(font => {
       const option = document.createElement("option");
       option.value = font;
-      fontList.appendChild(option);
+      if (fontMetadata[font]) {
+        option.textContent = `${font} (${fontMetadata[font]})`;
+      } else {
+        option.textContent = font;
+      }
+      fontFamilyInput.appendChild(option);
     });
     // Set initial value
     if (window.fabricEditor && window.fabricEditor.getActiveObject()) {
       fontFamilyInput.value = window.fabricEditor.getActiveObject().fontFamily;
     } else {
-      fontFamilyInput.value = "Verdana"; // Default
+      fontFamilyInput.value = "Inter"; // Default
     }
   }
 
@@ -97,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   populateFontDropdown(basicFonts);
 
   // Event listener for font family change
-  fontFamilyInput.addEventListener("input", (event) => {
+  fontFamilyInput.addEventListener("change", (event) => {
     updateFontFamily(event.target.value);
   });
 
@@ -164,24 +182,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function handleInfoTab() {
     const infoDisplay = document.getElementById("printerInfoDisplay");
-    infoDisplay.textContent = "Connecting to printer...";
+    infoDisplay.textContent = _t("status_bt_connecting");
 
     try {
       // Ensure connectPrinter is available globally or imported
       if (typeof connectPrinter === 'function') {
         const printer = await connectPrinter();
         if (printer) {
-          infoDisplay.textContent = "Retrieving information...";
+          infoDisplay.textContent = _t("status_bt_retrieving");
           const info = await printer.getPrinterInfo();
           infoDisplay.innerHTML = info;
         } else {
-          infoDisplay.textContent = "Could not connect to printer.";
+          infoDisplay.textContent = _t("status_bt_failed");
         }
       } else {
-        infoDisplay.textContent = "Error: connectPrinter function not found.";
+        infoDisplay.textContent = _t("status_bt_err_func_not_found");
       }
     } catch (err) {
-      infoDisplay.textContent = "Error: " + err.message;
+      infoDisplay.textContent = _t("status_bt_error") + err.message;
     }
   }
 
