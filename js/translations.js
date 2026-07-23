@@ -136,6 +136,7 @@ const translations = {
 
     // Dynamic Javascript Strings (Dialogs & Alerts)
     "confirm_load_template": "Weet je zeker dat je dit sjabloon wilt laden? Je huidige ontwerp wordt overschreven.",
+    "alert_no_template": "Sjabloon niet gevonden.",
     "prompt_template_name": "Voer een naam in voor dit sjabloon:",
     "confirm_delete_template": "Weet je zeker dat je dit sjabloon wilt verwijderen?",
     "alert_no_canvas": "Geen canvas gevonden.",

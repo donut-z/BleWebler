@@ -121,9 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event listener for font size change
   if (fontSizeInput) {
-    fontSizeInput.addEventListener("change", (event) => {
-      updateFontSize(parseInt(event.target.value, 10));
-    });
+    const handleFontSizeChange = (event) => {
+      const val = parseInt(event.target.value, 10);
+      if (!isNaN(val) && val > 0) {
+        updateFontSize(val);
+      }
+    };
+    fontSizeInput.addEventListener("change", handleFontSizeChange);
+    fontSizeInput.addEventListener("input", handleFontSizeChange);
   }
 
   // Event listener for loading system fonts
@@ -228,20 +233,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Add Listeners for Live Update
     const fabricCanvas = window.getFabricCanvas();
     if (fabricCanvas) {
-      fabricCanvas.on('object:modified', updatePreview);
-      fabricCanvas.on('object:added', updatePreview);
-      fabricCanvas.on('object:removed', updatePreview);
-      fabricCanvas.on('selection:updated', updatePreview);
-      fabricCanvas.on('selection:created', updatePreview);
-      fabricCanvas.on('selection:cleared', updatePreview);
-      fabricCanvas.on('canvas:resized', updatePreview);
+      let previewTimeout = null;
+      function debouncedUpdatePreview() {
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(updatePreview, 150);
+      }
 
-      // Debounce text changes
-      let timeout;
-      fabricCanvas.on('text:changed', () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(updatePreview, 100);
-      });
+      fabricCanvas.on('object:modified', debouncedUpdatePreview);
+      fabricCanvas.on('object:added', debouncedUpdatePreview);
+      fabricCanvas.on('object:removed', debouncedUpdatePreview);
+      fabricCanvas.on('selection:updated', debouncedUpdatePreview);
+      fabricCanvas.on('selection:created', debouncedUpdatePreview);
+      fabricCanvas.on('selection:cleared', debouncedUpdatePreview);
+      fabricCanvas.on('text:changed', debouncedUpdatePreview);
+      fabricCanvas.on('canvas:resized', updatePreview);
     }
   }
 
@@ -499,13 +504,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Dimension input handlers
   if (widthInput) {
     widthInput.addEventListener('input', () => {
+      isUpdatingFromInputs = true;
       updateCanvasFromInputs();
+      isUpdatingFromInputs = false;
     });
   }
 
   if (heightInput) {
     heightInput.addEventListener('input', () => {
+      isUpdatingFromInputs = true;
       updateCanvasFromInputs();
+      isUpdatingFromInputs = false;
     });
   }
 
@@ -513,8 +522,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.fabricEditor) {
     const originalUpdateCanvasSize = window.fabricEditor.updateCanvasSize;
     if (originalUpdateCanvasSize) {
-      window.fabricEditor.updateCanvasSize = function (width, height) {
-        originalUpdateCanvasSize.call(this, width, height);
+      window.fabricEditor.updateCanvasSize = function (width, height, skipScaling) {
+        originalUpdateCanvasSize.call(this, width, height, skipScaling);
         if (!isUpdatingFromInputs) {
           updateDimensionInputs();
         }
@@ -943,6 +952,16 @@ window.addDateTemplate = function() {
   // Als de tekst nu te hoog is voor het label, schaal dan naar de hoogte
   if (text.getScaledHeight() > heightPx * 0.95) {
     text.scaleToHeight(heightPx * 0.95);
+  }
+
+  // Normaliseer schaal naar fontSize
+  const calculatedFontSize = Math.round(text.fontSize * text.scaleY);
+  if (calculatedFontSize >= 1) {
+    text.set({
+      fontSize: calculatedFontSize,
+      scaleX: 1,
+      scaleY: 1
+    });
   }
 
   canvas.add(text);

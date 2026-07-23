@@ -8,10 +8,17 @@
 function toGrayscale(imageData) {
     const data = imageData.data;
     for (let i = 0; i < data.length; i += 4) {
-        const avg = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        data[i] = avg;     // red
-        data[i + 1] = avg; // green
-        data[i + 2] = avg; // blue
+        if (data[i + 3] < 128) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+            data[i + 3] = 255;
+        } else {
+            const avg = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i] = avg;     // red
+            data[i + 1] = avg; // green
+            data[i + 2] = avg; // blue
+        }
     }
     return imageData;
 }

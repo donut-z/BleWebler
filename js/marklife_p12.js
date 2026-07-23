@@ -49,15 +49,27 @@ class MarklifeP12Printer extends PrinterBase {
   }
 
   bitmapToPacket(bitmap, width) {
-    const height = bitmap.length;
+    const rawHeight = bitmap.length;
+    const remainder = rawHeight % 8;
+    const paddedHeight = remainder === 0 ? rawHeight : rawHeight + (8 - remainder);
+
+    let paddedBitmap = bitmap;
+    if (paddedHeight !== rawHeight) {
+      paddedBitmap = [...bitmap];
+      const emptyRow = "0".repeat(width);
+      for (let i = rawHeight; i < paddedHeight; i++) {
+        paddedBitmap.push(emptyRow);
+      }
+    }
+
     const bytes = [];
 
     for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y += 8) {
-        const invertedY = height - 8 - y;
+      for (let y = 0; y < paddedHeight; y += 8) {
+        const invertedY = paddedHeight - 8 - y;
         let byte = 0;
         for (let bit = 0; bit < 8; bit++) {
-          const row = bitmap[invertedY + bit];
+          const row = paddedBitmap[invertedY + bit];
           if (row && row[x] === "1") {
             byte |= (1 << bit);
           }

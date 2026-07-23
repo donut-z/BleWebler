@@ -142,8 +142,14 @@ function deselectObject() {
 document.addEventListener('DOMContentLoaded', () => {
   // Set up keyboard event listeners
   document.addEventListener('keydown', (e) => {
-    // Don't trigger shortcuts when typing in inputs
+    // Don't trigger shortcuts when typing in inputs or editing text on canvas
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+      return;
+    }
+
+    const currentCanvas = window.getFabricCanvas ? window.getFabricCanvas() : null;
+    const activeObj = currentCanvas ? currentCanvas.getActiveObject() : null;
+    if (activeObj && activeObj.isEditing) {
       return;
     }
 
@@ -175,6 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!e.ctrlKey) pressedKeys.delete('Control');
     if (!e.altKey) pressedKeys.delete('Alt');
     if (!e.metaKey) pressedKeys.delete('Meta');
+  });
+
+  window.addEventListener('blur', () => {
+    pressedKeys.clear();
   });
 
   // Populate shortcuts modal via global function

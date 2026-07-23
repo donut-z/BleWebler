@@ -202,7 +202,7 @@ window.loadTemplate = function(templateId, isDefault = false) {
   const templateList = isDefault ? defaultTemplates : customTemplates;
   const template = templateList.find(t => t.id === templateId);
   if (!template) {
-    alert(_t("confirm_load_template")); // Let's use alert_no_template or template not found
+    alert(_t("alert_no_template"));
     return;
   }
   

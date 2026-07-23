@@ -58,7 +58,7 @@ Paper Width      : 15mm
 Print Tech       : Thermal (Inkless)
 Manufacturer     : e. g. KARSTEN INTERNATIONAL BV
 FCC-ID           : 2BHE2-KS4732
-User Manual      : <a href="https://manuals.sit-connect.com/public/articlemanual/2839aca0-43b7-4b17-8695-a7a63d23ecfe.pdf">View Manual</a>`
+User Manual      : <a href="https://manuals.sit-connect.com/public/articlemanual/2839aca0-43b7-4b17-8695-a7a63d23ecfe.pdf" target="_blank" rel="noopener noreferrer">View Manual</a>`
     },
 
     // Add more printers here

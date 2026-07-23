@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     removeEmptyTextObjects(e);
   });
   canvas.on('selection:created', updateTextControls);
-  canvas.on('object:modified', handleObjectModified); // Update controls when object is modified (e.g., scaled)
+  canvas.on('object:modified', handleObjectModified); // Update controls and normalize scaling when object is modified
 
   // Double-click to focus input
   canvas.on('mouse:dblclick', (e) => {
@@ -208,12 +208,6 @@ document.addEventListener("DOMContentLoaded", () => {
       scaleX: obj.scaleX,
       scaleY: obj.scaleY,
     };
-  });
-
-  canvas.on('object:modified', (e) => {
-    const obj = e.target;
-    obj.setCoords();
-    delete obj.lastState;
   });
 
   // Constrain object scaling to stay within padding bounds
@@ -278,6 +272,18 @@ document.addEventListener("DOMContentLoaded", () => {
         // Fallback if no transform info
         obj.scaleX = newScale;
         obj.scaleY = newScale;
+      }
+    }
+
+    // Constrain text height so it cannot exceed available printable height (e.g. 12mm)
+    if (obj.type === 'i-text' || obj.type === 'textbox') {
+      const currentBounds = getPaddingBounds();
+      const maxAllowedHeight = Math.max(10, currentBounds.bottom - currentBounds.top);
+      const scaledHeight = obj.getScaledHeight();
+      if (scaledHeight > maxAllowedHeight) {
+        const maxScale = maxAllowedHeight / (obj.height || 1);
+        obj.scaleX = maxScale;
+        obj.scaleY = maxScale;
       }
     }
 
@@ -450,7 +456,33 @@ function removeEmptyTextObjects(e) {
 
 function handleObjectModified(e) {
   const modifiedObject = e.target;
-  if (modifiedObject && modifiedObject.type === 'image') {
+  if (!modifiedObject) return;
+
+  modifiedObject.setCoords();
+  delete modifiedObject.lastState;
+
+  if (modifiedObject.type === 'i-text' || modifiedObject.type === 'textbox') {
+    if (modifiedObject.scaleX !== 1 || modifiedObject.scaleY !== 1) {
+      let effectiveFontSize = Math.round(modifiedObject.fontSize * modifiedObject.scaleY);
+      const bounds = getPaddingBounds();
+      const maxAllowedHeight = Math.max(10, bounds.bottom - bounds.top);
+
+      const unscaledHeightAtNewFont = modifiedObject.height * (effectiveFontSize / (modifiedObject.fontSize || 1));
+      if (unscaledHeightAtNewFont > maxAllowedHeight) {
+        const fitRatio = maxAllowedHeight / (modifiedObject.height || 1);
+        effectiveFontSize = Math.max(1, Math.floor(modifiedObject.fontSize * fitRatio));
+      }
+
+      if (effectiveFontSize >= 1) {
+        modifiedObject.set({
+          fontSize: effectiveFontSize,
+          scaleX: 1,
+          scaleY: 1
+        });
+        modifiedObject.setCoords();
+      }
+    }
+  } else if (modifiedObject.type === 'image') {
     applyDitheringToImage(modifiedObject);
   }
   updateTextControls(); // Always update text controls regardless of object type
@@ -489,10 +521,12 @@ function addTextToCanvas() {
   const contentWidth = bounds.right - bounds.left;
   const contentHeight = bounds.bottom - bounds.top;
 
+  let initialFontSize = parseFloat(fontSizeInput.value) || 40;
+
   const newText = new fabric.IText(textContent, {
     left: bounds.left,
     fontFamily: fontFamilyInput.value || 'Inter', // Use fontFamilySelect
-    fontSize: parseFloat(fontSizeInput.value) || 40,
+    fontSize: initialFontSize,
     fill: '#000000',
     fontWeight: 'bold', // Default to normal, will be set by toggleStyle if active
     fontStyle: 'normal',  // Default to normal, will be set by toggleStyle if active
@@ -500,6 +534,12 @@ function addTextToCanvas() {
     textBaseline: 'alphabetic', // Explicitly set a valid textBaseline
     lockUniScaling: true, // Force proportional scaling
   });
+
+  if (contentHeight > 0 && newText.height > contentHeight) {
+    const maxRatio = contentHeight / newText.height;
+    const cappedFontSize = Math.max(1, Math.floor(initialFontSize * maxRatio));
+    newText.set({ fontSize: cappedFontSize });
+  }
 
   // Hide middle controls (only allow corner scaling)
   newText.setControlsVisibility({
@@ -1171,9 +1211,21 @@ window.fabricEditor = {
 
   setFontSize: function (fontSize) {
     const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'i-text') {
+    if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'textbox')) {
+      const bounds = getPaddingBounds();
+      const maxAllowedHeight = Math.max(10, bounds.bottom - bounds.top);
+
+      let finalFontSize = fontSize;
+      const scaleToApply = fontSize / (activeObject.fontSize || 1);
+      const expectedHeight = activeObject.height * scaleToApply;
+
+      if (expectedHeight > maxAllowedHeight) {
+        const maxRatio = maxAllowedHeight / (activeObject.height || 1);
+        finalFontSize = Math.max(1, Math.floor(activeObject.fontSize * maxRatio));
+      }
+
       activeObject.set({
-        fontSize: fontSize,
+        fontSize: finalFontSize,
         scaleX: 1,
         scaleY: 1
       });
@@ -1324,17 +1376,46 @@ window.fabricEditor = {
 
         // 1. Resize object
         if (!skipScaling) {
-          if (isEnlarging) {
-            // Scale up proportionally when enlarging
-            obj.scaleX *= scaleFactor;
-            obj.scaleY *= scaleFactor;
+          if (obj.type === 'i-text' || obj.type === 'textbox') {
+            const effectiveScale = obj.scaleY || 1;
+            const currentEffectiveFontSize = obj.fontSize * effectiveScale;
+            let newFontSize = currentEffectiveFontSize;
+            if (isEnlarging) {
+              newFontSize = Math.round(currentEffectiveFontSize * scaleFactor);
+            } else {
+              const objWidth = obj.getScaledWidth();
+              if (objWidth > newContentWidth) {
+                const fitScaleFactor = newContentWidth / objWidth;
+                newFontSize = Math.round(currentEffectiveFontSize * fitScaleFactor);
+              }
+            }
+            if (newFontSize >= 1) {
+              const maxAllowedHeight = Math.max(10, newBounds.bottom - newBounds.top);
+              const heightAtNewFont = obj.height * (newFontSize / (obj.fontSize || 1));
+              if (heightAtNewFont > maxAllowedHeight) {
+                const maxRatio = maxAllowedHeight / (obj.height || 1);
+                newFontSize = Math.max(1, Math.floor(obj.fontSize * maxRatio));
+              }
+
+              obj.set({
+                fontSize: newFontSize,
+                scaleX: 1,
+                scaleY: 1
+              });
+            }
           } else {
-            // When shrinking: only downscale if the object overflows the available content width
-            const objWidth = obj.getScaledWidth();
-            if (objWidth > newContentWidth) {
-              const fitScaleFactor = newContentWidth / objWidth;
-              obj.scaleX *= fitScaleFactor;
-              obj.scaleY *= fitScaleFactor;
+            if (isEnlarging) {
+              // Scale up proportionally when enlarging
+              obj.scaleX *= scaleFactor;
+              obj.scaleY *= scaleFactor;
+            } else {
+              // When shrinking: only downscale if the object overflows the available content width
+              const objWidth = obj.getScaledWidth();
+              if (objWidth > newContentWidth) {
+                const fitScaleFactor = newContentWidth / objWidth;
+                obj.scaleX *= fitScaleFactor;
+                obj.scaleY *= fitScaleFactor;
+              }
             }
           }
         }
