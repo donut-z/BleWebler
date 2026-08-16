@@ -998,3 +998,41 @@ window.toggleTemplatesAccordion = function(event) {
     content.style.display = 'block';
   }
 };
+
+// Global Modal Backdrop Click, ESC key & Scroll Lock sync
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Close when clicking directly on any modal backdrop (outside .modal-content)
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('modal')) {
+      e.target.classList.remove('show');
+      if (typeof window.closeIconPicker === 'function' && e.target.id === 'iconModal') {
+        window.closeIconPicker();
+      }
+      if (!document.querySelector('.modal.show')) {
+        document.body.classList.remove('modal-open');
+      }
+    }
+  });
+
+  // 2. Close open modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const openModals = document.querySelectorAll('.modal.show');
+      openModals.forEach(m => m.classList.remove('show'));
+      document.body.classList.remove('modal-open');
+    }
+  });
+
+  // 3. Keep body.modal-open synchronized whenever any modal gains/loses .show class
+  if (window.MutationObserver) {
+    const modalObserver = new MutationObserver(() => {
+      const hasOpenModal = !!document.querySelector('.modal.show');
+      document.body.classList.toggle('modal-open', hasOpenModal);
+    });
+
+    document.querySelectorAll('.modal').forEach(modal => {
+      modalObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    });
+  }
+});
+

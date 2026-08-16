@@ -640,6 +640,7 @@ window.openIconPicker = function() {
   renderCategoryTabs();
   renderIconGrid();
   modal.classList.add('show');
+  document.body.classList.add('modal-open');
 
   const searchInput = document.getElementById('iconSearchInput');
   if (searchInput) {
@@ -656,6 +657,9 @@ window.closeIconPicker = function() {
   const modal = document.getElementById('iconModal');
   if (modal) {
     modal.classList.remove('show');
+  }
+  if (!document.querySelector('.modal.show')) {
+    document.body.classList.remove('modal-open');
   }
 };
 
@@ -727,7 +731,7 @@ function renderIconGrid() {
     const displayName = currentLang === 'en' ? (icon.nameEn || icon.name) : icon.name;
     return `
       <div class="icon-grid-item" data-icon-id="${icon.id}" title="${displayName}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px; min-width: 28px; min-height: 28px; max-width: 28px; max-height: 28px; display: block; margin: 0 auto 4px auto; flex-shrink: 0;">
           ${icon.svg}
         </svg>
         <span class="icon-label">${displayName}</span>
