@@ -98,6 +98,7 @@ const translations = {
     "icon_cat_safety": "Veiligheid & Gevaar",
     "icon_cat_arrows": "Pijlen & Symbolen",
     "icon_cat_care": "Wasvoorschriften & Zorg",
+    "icon_cat_lucide": "Alle Lucide (>2000)",
     "icon_no_results": "Geen iconen gevonden voor deze zoekopdracht.",
 
     // Keyboard Shortcuts Modal
@@ -276,6 +277,7 @@ const translations = {
     "icon_cat_safety": "Safety & Hazard",
     "icon_cat_arrows": "Arrows & Symbols",
     "icon_cat_care": "Care & Laundry",
+    "icon_cat_lucide": "All Lucide (>2000)",
     "icon_no_results": "No icons found for this search.",
 
     // Keyboard Shortcuts Modal

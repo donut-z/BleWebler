@@ -1,6 +1,7 @@
 /**
  * BleWebler - Icon Library & Picker Module
- * Provides curated vector icons optimized for 1-bit thermal label printing.
+ * Combines curated label/ISO symbols with the full Lucide vector library (>2,000 icons).
+ * Supports live bilingual search (NL/EN), category filtering, and lazy rendering.
  */
 
 const ICON_CATEGORIES = [
@@ -10,15 +11,151 @@ const ICON_CATEGORIES = [
   { id: 'office', nameKey: 'icon_cat_office', name: 'Kantoor & Opslag' },
   { id: 'safety', nameKey: 'icon_cat_safety', name: 'Veiligheid & Gevaar' },
   { id: 'arrows', nameKey: 'icon_cat_arrows', name: 'Pijlen & Symbolen' },
-  { id: 'care', nameKey: 'icon_cat_care', name: 'Wasvoorschriften & Zorg' }
+  { id: 'care', nameKey: 'icon_cat_care', name: 'Wasvoorschriften & Zorg' },
+  { id: 'lucide_all', nameKey: 'icon_cat_lucide', name: 'Alle Lucide (>2000)' }
 ];
 
-const ICON_LIBRARY = [
+// Dutch to English search synonym dictionary for quick discovery of Lucide icons
+const DUTCH_SYNONYMS = {
+  'hond': 'dog',
+  'kat': 'cat',
+  'auto': 'car vehicle',
+  'wagen': 'car vehicle truck',
+  'fiets': 'bike bicycle',
+  'trein': 'train',
+  'vliegtuig': 'plane airplane flight',
+  'boot': 'boat ship anchor',
+  'schip': 'ship boat anchor',
+  'huis': 'house home building',
+  'boom': 'tree',
+  'bloem': 'flower',
+  'plant': 'sprout plant leaf',
+  'water': 'droplet water waves',
+  'zon': 'sun sunny daylight',
+  'maan': 'moon night',
+  'wolk': 'cloud weather',
+  'regen': 'rain cloud droplet',
+  'sneeuw': 'snow snowflake freeze winter',
+  'lamp': 'light lamp bulb idea',
+  'licht': 'sun light bulb lamp',
+  'telefoon': 'phone smartphone call',
+  'muziek': 'music volume audio headphone mic sound',
+  'film': 'film movie video video-recorder play',
+  'camera': 'camera photo aperture video',
+  'foto': 'camera image photo picture',
+  'afbeelding': 'image photo picture gallery',
+  'slot': 'lock unlock key security',
+  'sleutel': 'key lock door',
+  'ster': 'star favorite bookmark rating',
+  'hart': 'heart love favorite like health',
+  'hartje': 'heart love favorite like health',
+  'bier': 'beer beverage drink glass',
+  'koffie': 'coffee cup mug cafe tea',
+  'thee': 'coffee tea cup mug',
+  'eten': 'utensils fork knife spoon apple food pizza cake soup sandwich',
+  'drinken': 'cup glass coffee wine beer goblet bottle',
+  'wijn': 'wine glass bottle alcohol',
+  'schaar': 'scissors cut',
+  'knippen': 'scissors cut crop',
+  'klok': 'clock watch timer time alarm hour',
+  'tijd': 'time clock timer watch hour minute',
+  'wekker': 'alarm-clock clock bell timer',
+  'kalender': 'calendar date agenda day month year',
+  'datum': 'calendar date day',
+  'brief': 'mail envelope message post letter send',
+  'bericht': 'message chat mail comment message-square',
+  'geld': 'dollar euro coin banknote credit-card wallet bank',
+  'euro': 'euro dollar coin banknote wallet bank',
+  'portemonnee': 'wallet credit-card bank',
+  'winkel': 'shopping cart bag store shop buy',
+  'kopen': 'shopping cart bag store shop buy tag price',
+  'tas': 'shopping-bag bag brief-case',
+  'doos': 'package box archive cube',
+  'pakket': 'package box parcel delivery shipping truck',
+  'post': 'mail envelope package box truck delivery',
+  'gereedschap': 'wrench hammer tool screwdriver axe drill',
+  'reparatie': 'wrench hammer tool screwdriver construction',
+  'veilig': 'shield check lock safe security protect',
+  'beveiliging': 'shield lock key camera eye cctv',
+  'gevaar': 'alert warning triangle skull radiation biohazard flame',
+  'waarschuwing': 'alert warning triangle alert-circle siren',
+  'brand': 'flame fire hot ignite',
+  'vuur': 'flame fire hot ignite',
+  'bliksem': 'zap lightning flash power',
+  'elektriciteit': 'zap battery plug power voltage lightning socket',
+  'stroom': 'zap battery plug power voltage lightning socket',
+  'batterij': 'battery charging power',
+  'accu': 'battery charging power',
+  'stekker': 'plug socket power wire cord',
+  'kabel': 'cable usb wire cord link',
+  'afval': 'trash bin delete remove',
+  'prullenbak': 'trash bin delete remove',
+  'verwijderen': 'trash delete remove x cross ban',
+  'zoeken': 'search magnifying-glass find lookup',
+  'kaart': 'map pin navigation compass route locate',
+  'locatie': 'pin map navigation compass landmark flag',
+  'persoon': 'user person users contact user-check',
+  'gebruiker': 'user person account profile',
+  'mens': 'user person accessibility',
+  'instellingen': 'settings gear sliders sliders-horizontal tool',
+  'opties': 'settings gear sliders sliders-horizontal menu',
+  'wifi': 'wifi wireless network signal broadcast',
+  'internet': 'globe wifi network browser link',
+  'netwerk': 'network wifi server database router',
+  'laptop': 'laptop computer monitor screen pc',
+  'computer': 'laptop computer monitor screen pc cpu hard-drive',
+  'scherm': 'monitor screen display tv tablet',
+  'printer': 'printer print paper document',
+  'geluid': 'volume speaker audio sound bell mic',
+  'stil': 'volume-x mute quiet bell-off',
+  'cadeau': 'gift package present box birthday',
+  'feest': 'gift cake party sparkles confetti wine',
+  'kleding': 'shirt dress scissors tag coat',
+  'kleren': 'shirt dress scissors tag coat hanger',
+  'reizen': 'plane luggage suitcase car compass map globe ticket hotel',
+  'koffer': 'luggage suitcase briefcase bag package',
+  'sport': 'trophy medal dumbbell activity bike flag target',
+  'gezondheid': 'heart activity cross pill stethoscope hospital medical',
+  'dokter': 'stethoscope cross pill hospital user-check',
+  'ziekenhuis': 'hospital cross pill ambulance syringe',
+  'medicijn': 'pill cross bottle syringe test-tube beaker',
+  'apotheek': 'cross pill test-tube beaker bottle',
+  'kantoor': 'folder file-text paperclip pin archive building brief-case',
+  'document': 'file-text file folder book archive sheet',
+  'map': 'folder archive directory folder-open',
+  'folder': 'folder archive directory',
+  'bestand': 'file file-text document image',
+  'pen': 'pen pencil edit feather stylus',
+  'potlood': 'pencil pen edit',
+  'schrijven': 'pen pencil edit file-text book',
+  'boeken': 'book bookmark library graduation-cap book-open',
+  'lezen': 'book book-open bookmark glasses eye',
+  'bril': 'glasses eye glasses-round',
+  'oog': 'eye view watch look scan',
+  'slot': 'lock unlock key shield',
+  'check': 'check check-circle check-square verified badge-check',
+  'goed': 'check check-circle thumbs-up smile verified',
+  'fout': 'x x-circle ban alert-triangle thumbs-down',
+  'annuleren': 'x x-circle ban rotate-ccw',
+  'terug': 'arrow-left undo rotate-ccw chevron-left',
+  'verder': 'arrow-right redo chevron-right next',
+  'omhoog': 'arrow-up chevron-up top upload',
+  'omlaag': 'arrow-down chevron-down download bottom',
+  'draaien': 'refresh-cw rotate-cw rotate-ccw repeat',
+  'herhalen': 'repeat refresh-cw rotate-cw cycle',
+  'vernieuwen': 'refresh-cw rotate-cw update sync',
+  'synchroniseren': 'refresh-cw rotate-cw update sync database',
+  'vlag': 'flag landmark bookmark banner',
+  'taal': 'globe languages message-square flag'
+};
+
+// Curated set of high-contrast label & symbol icons
+const CURATED_ICONS = [
   // --- VERPAKKING & VERZENDING ---
   {
     id: 'package',
-    name: 'Pakket',
-    nameEn: 'Package',
+    name: 'Pakket / Doos',
+    nameEn: 'Package / Box',
     category: 'packaging',
     keywords: ['doos', 'pakket', 'box', 'package', 'post', 'verzending', 'shipping', 'delivery', 'karton'],
     svg: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'
@@ -28,13 +165,13 @@ const ICON_LIBRARY = [
     name: 'Breekbaar (Glas)',
     nameEn: 'Fragile Glass',
     category: 'packaging',
-    keywords: ['breekbaar', 'glas', 'fragile', 'glass', 'wine', 'voorzichtig', 'care', 'handvat'],
+    keywords: ['breekbaar', 'glas', 'fragile', 'glass', 'wine', 'voorzichtig', 'care', 'handvat', 'breekbaar glas'],
     svg: '<path d="M8 22h8"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5V3H7v7a5 5 0 0 0 5 5Z"/><path d="M7 6h10"/>'
   },
   {
     id: 'umbrella',
-    name: 'Droog Houden',
-    nameEn: 'Keep Dry',
+    name: 'Droog Houden (Paraplu)',
+    nameEn: 'Keep Dry (Umbrella)',
     category: 'packaging',
     keywords: ['droog', 'paraplu', 'umbrella', 'keep dry', 'regen', 'water', 'beschermen'],
     svg: '<path d="M22 12a10.06 10.06 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/>'
@@ -627,8 +764,60 @@ const ICON_LIBRARY = [
   }
 ];
 
+// Unified memory store for all icons
+let fullIconLibrary = [];
 let activeIconCategory = 'all';
 let iconSearchQuery = '';
+
+// Pagination/Lazy rendering state
+let renderedCount = 0;
+const BATCH_SIZE = 80;
+let currentFilteredList = [];
+
+/**
+ * Convert Lucide node tree to SVG inner string
+ */
+function lucideNodesToSvg(nodes) {
+  if (!nodes || !Array.isArray(nodes)) return '';
+  return nodes.map(([tag, attrs]) => {
+    const attrPairs = Object.entries(attrs || {})
+      .map(([k, v]) => `${k}="${v}"`)
+      .join(' ');
+    return `<${tag} ${attrPairs}/>`;
+  }).join('');
+}
+
+/**
+ * Build the unified icon database combining curated symbols + all Lucide icons
+ */
+function buildFullIconLibrary() {
+  const curatedIds = new Set(CURATED_ICONS.map(i => i.id.toLowerCase()));
+  fullIconLibrary = [...CURATED_ICONS];
+
+  if (window.lucide && window.lucide.icons) {
+    for (const [key, nodes] of Object.entries(window.lucide.icons)) {
+      const lowerKey = key.toLowerCase();
+      // Skip if already in curated set
+      if (curatedIds.has(lowerKey)) continue;
+
+      const readableName = key.replace(/([a-z])([A-Z0-9])/g, '$1 $2');
+      const keywords = [
+        lowerKey,
+        readableName.toLowerCase(),
+        key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+      ];
+
+      fullIconLibrary.push({
+        id: `lucide-${lowerKey}`,
+        name: readableName,
+        nameEn: readableName,
+        category: 'lucide_all',
+        keywords: keywords,
+        svg: lucideNodesToSvg(nodes)
+      });
+    }
+  }
+}
 
 /**
  * Open Icon Picker modal
@@ -637,8 +826,12 @@ window.openIconPicker = function() {
   const modal = document.getElementById('iconModal');
   if (!modal) return;
 
+  if (fullIconLibrary.length === 0) {
+    buildFullIconLibrary();
+  }
+
   renderCategoryTabs();
-  renderIconGrid();
+  resetAndRenderIconGrid();
   modal.classList.add('show');
   document.body.classList.add('modal-open');
 
@@ -674,15 +867,16 @@ function renderCategoryTabs() {
 
   tabsContainer.innerHTML = ICON_CATEGORIES.map(cat => {
     let label = cat.name;
-    if (typeof t === 'function') {
-      label = t(cat.nameKey) || cat.name;
+    if (typeof _t === 'function' && cat.nameKey) {
+      label = _t(cat.nameKey) || cat.name;
     } else if (currentLang === 'en') {
       label = cat.id === 'all' ? 'All' :
               cat.id === 'packaging' ? 'Packaging & Shipping' :
               cat.id === 'food' ? 'Kitchen & Food' :
               cat.id === 'office' ? 'Office & Storage' :
               cat.id === 'safety' ? 'Safety & Hazard' :
-              cat.id === 'arrows' ? 'Arrows & Symbols' : 'Care & Laundry';
+              cat.id === 'arrows' ? 'Arrows & Symbols' :
+              cat.id === 'care' ? 'Care & Laundry' : 'All Lucide (>2000)';
     }
     const isActive = cat.id === activeIconCategory;
     return `<button type="button" class="icon-category-chip ${isActive ? 'active' : ''}" data-cat="${cat.id}">${label}</button>`;
@@ -692,42 +886,83 @@ function renderCategoryTabs() {
     chip.addEventListener('click', () => {
       activeIconCategory = chip.getAttribute('data-cat');
       renderCategoryTabs();
-      renderIconGrid();
+      resetAndRenderIconGrid();
     });
   });
 }
 
 /**
- * Render icon grid based on active category & search query
+ * Reset grid scroll and render first batch of filtered icons
  */
-function renderIconGrid() {
-  const gridContainer = document.getElementById('iconGrid');
-  if (!gridContainer) return;
+function resetAndRenderIconGrid() {
+  if (fullIconLibrary.length === 0) {
+    buildFullIconLibrary();
+  }
 
-  const currentLang = window.currentLanguage || 'nl';
   const query = iconSearchQuery.trim().toLowerCase();
-
-  const filteredIcons = ICON_LIBRARY.filter(icon => {
-    // 1. Category check
-    if (activeIconCategory !== 'all' && icon.category !== activeIconCategory) {
-      return false;
+  
+  // Expand search query with Dutch synonyms
+  let searchTokens = query ? [query] : [];
+  if (query) {
+    for (const [nlTerm, enExpanded] of Object.entries(DUTCH_SYNONYMS)) {
+      if (query.includes(nlTerm) || nlTerm.includes(query)) {
+        enExpanded.split(' ').forEach(tok => {
+          if (tok && !searchTokens.includes(tok)) {
+            searchTokens.push(tok);
+          }
+        });
+      }
     }
+  }
+
+  currentFilteredList = fullIconLibrary.filter(icon => {
+    // 1. Category check
+    if (activeIconCategory !== 'all') {
+      if (activeIconCategory === 'lucide_all') {
+        // Show everything or specifically lucide
+      } else if (icon.category !== activeIconCategory) {
+        return false;
+      }
+    }
+
     // 2. Search query check
-    if (query) {
-      const matchName = icon.name.toLowerCase().includes(query) || (icon.nameEn && icon.nameEn.toLowerCase().includes(query));
-      const matchKeyword = icon.keywords.some(k => k.toLowerCase().includes(query));
-      return matchName || matchKeyword;
+    if (searchTokens.length > 0) {
+      const matchName = searchTokens.some(tok => icon.name.toLowerCase().includes(tok));
+      const matchNameEn = icon.nameEn && searchTokens.some(tok => icon.nameEn.toLowerCase().includes(tok));
+      const matchKeywords = icon.keywords && icon.keywords.some(k => searchTokens.some(tok => k.includes(tok)));
+      return matchName || matchNameEn || matchKeywords;
     }
     return true;
   });
 
-  if (filteredIcons.length === 0) {
-    const emptyMsg = (typeof t === 'function') ? t('icon_no_results') : 'Geen iconen gevonden.';
+  const gridContainer = document.getElementById('iconGrid');
+  if (!gridContainer) return;
+
+  gridContainer.scrollTop = 0;
+  gridContainer.innerHTML = '';
+  renderedCount = 0;
+
+  if (currentFilteredList.length === 0) {
+    const emptyMsg = (typeof _t === 'function') ? _t('icon_no_results') : 'Geen iconen gevonden voor deze zoekopdracht.';
     gridContainer.innerHTML = `<div class="icon-empty-state">${emptyMsg}</div>`;
     return;
   }
 
-  gridContainer.innerHTML = filteredIcons.map(icon => {
+  renderNextBatch();
+}
+
+/**
+ * Append next batch of items (infinite scroll)
+ */
+function renderNextBatch() {
+  const gridContainer = document.getElementById('iconGrid');
+  if (!gridContainer) return;
+
+  const currentLang = window.currentLanguage || 'nl';
+  const batch = currentFilteredList.slice(renderedCount, renderedCount + BATCH_SIZE);
+  if (batch.length === 0) return;
+
+  const htmlChunk = batch.map(icon => {
     const displayName = currentLang === 'en' ? (icon.nameEn || icon.name) : icon.name;
     return `
       <div class="icon-grid-item" data-icon-id="${icon.id}" title="${displayName}">
@@ -739,15 +974,22 @@ function renderIconGrid() {
     `;
   }).join('');
 
-  gridContainer.querySelectorAll('.icon-grid-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const iconId = item.getAttribute('data-icon-id');
-      const iconData = ICON_LIBRARY.find(i => i.id === iconId);
+  const tempWrapper = document.createElement('div');
+  tempWrapper.innerHTML = htmlChunk;
+
+  while (tempWrapper.firstChild) {
+    const itemEl = tempWrapper.firstChild;
+    itemEl.addEventListener('click', () => {
+      const iconId = itemEl.getAttribute('data-icon-id');
+      const iconData = fullIconLibrary.find(i => i.id === iconId);
       if (iconData) {
         insertIconIntoCanvas(iconData);
       }
     });
-  });
+    gridContainer.appendChild(itemEl);
+  }
+
+  renderedCount += batch.length;
 }
 
 /**
@@ -819,6 +1061,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('iconModal');
   const searchInput = document.getElementById('iconSearchInput');
   const clearBtn = document.getElementById('iconSearchClearBtn');
+  const gridContainer = document.getElementById('iconGrid');
+
+  buildFullIconLibrary();
 
   if (closeBtn) {
     closeBtn.addEventListener('click', closeIconPicker);
@@ -838,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (clearBtn) {
         clearBtn.style.display = iconSearchQuery ? 'flex' : 'none';
       }
-      renderIconGrid();
+      resetAndRenderIconGrid();
     });
   }
 
@@ -847,14 +1092,24 @@ document.addEventListener('DOMContentLoaded', () => {
       searchInput.value = '';
       iconSearchQuery = '';
       clearBtn.style.display = 'none';
-      renderIconGrid();
+      resetAndRenderIconGrid();
       searchInput.focus();
+    });
+  }
+
+  // Infinite scroll listener for smooth rendering of thousands of icons
+  if (gridContainer) {
+    gridContainer.addEventListener('scroll', () => {
+      if (renderedCount < currentFilteredList.length) {
+        if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight - 100) {
+          renderNextBatch();
+        }
+      }
     });
   }
 });
 
 window.renderIconPickerLanguage = function() {
   renderCategoryTabs();
-  renderIconGrid();
+  resetAndRenderIconGrid();
 };
-
