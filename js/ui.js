@@ -921,8 +921,11 @@ window.addDateTemplate = function() {
     return;
   }
 
-  const widthPx = canvas.getWidth();
-  const heightPx = canvas.getHeight();
+  const bounds = window.fabricEditor.getPaddingBounds ? window.fabricEditor.getPaddingBounds() : {
+    left: 0, top: 0, right: canvas.getWidth(), bottom: canvas.getHeight()
+  };
+  const contentWidth = bounds.right - bounds.left;
+  const contentHeight = bounds.bottom - bounds.top;
 
   const now = new Date();
   const d = String(now.getDate()).padStart(2, '0');
@@ -930,46 +933,40 @@ window.addDateTemplate = function() {
   const y = String(now.getFullYear()).slice(-2);
   const dateString = `${d}-${m}-${y}`;
 
-  canvas.clear();
+  const fontFamilyInput = document.getElementById('fontFamilySelect');
+  const fontSizeInput = document.getElementById('fontSizeInput');
+  let initialFontSize = fontSizeInput ? (parseFloat(fontSizeInput.value) || 40) : 40;
+  const fontFamily = (fontFamilyInput && fontFamilyInput.value) ? fontFamilyInput.value : 'Inter';
 
   const text = new fabric.IText(dateString, {
-    left: 0,
-    top: 0,
-    fontFamily: 'Verdana',
-    fontSize: 40, // Start grootte, wordt hieronder geschaald
+    left: bounds.left,
+    fontFamily: fontFamily,
+    fontSize: initialFontSize,
     fontWeight: 'bold',
     fill: '#000000',
+    textBaseline: 'alphabetic',
     lockUniScaling: true
   });
+
+  if (contentHeight > 0 && text.height > contentHeight) {
+    const maxRatio = contentHeight / text.height;
+    const cappedFontSize = Math.max(1, Math.floor(initialFontSize * maxRatio));
+    text.set({ fontSize: cappedFontSize });
+  }
 
   text.setControlsVisibility({
     mt: false, mb: false, ml: false, mr: false, mtr: true
   });
 
-  // Schaal naar breedte (met 5% marge aan de zijkanten)
-  text.scaleToWidth(widthPx * 0.95);
-
-  // Als de tekst nu te hoog is voor het label, schaal dan naar de hoogte
-  if (text.getScaledHeight() > heightPx * 0.95) {
-    text.scaleToHeight(heightPx * 0.95);
-  }
-
-  // Normaliseer schaal naar fontSize
-  const calculatedFontSize = Math.round(text.fontSize * text.scaleY);
-  if (calculatedFontSize >= 1) {
-    text.set({
-      fontSize: calculatedFontSize,
-      scaleX: 1,
-      scaleY: 1
-    });
-  }
+  text.set({
+    top: bounds.top + Math.max(0, (contentHeight - text.getScaledHeight()) / 2)
+  });
 
   canvas.add(text);
-  text.center(); // Centreer op het huidige canvas
-  text.set({ alignment: 'center', verticalAlignment: 'middle' });
   canvas.setActiveObject(text);
+  if (window.fabricEditor.setTextAlign) window.fabricEditor.setTextAlign('center');
+  if (window.fabricEditor.setVerticalAlign) window.fabricEditor.setVerticalAlign('middle');
 
-  // Support mobile selection menu
   if (text.hiddenTextarea) {
     text.hiddenTextarea.setAttribute('spellcheck', 'true');
     text.hiddenTextarea.style.userSelect = 'text';
@@ -977,8 +974,11 @@ window.addDateTemplate = function() {
   }
 
   canvas.renderAll();
-  console.log("Date added and scaled to fit current label.");
-}
+  if (window.fabricEditor.updateTextControls) {
+    window.fabricEditor.updateTextControls();
+  }
+  console.log("Date added as new text box to label.");
+};
 
 window.toggleTemplatesAccordion = function(event) {
   // If the user clicked on an action button (or an icon inside it) in the header, ignore the toggle!

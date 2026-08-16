@@ -1482,6 +1482,10 @@ window.fabricEditor = {
 
   getPaddingBounds: function () {
     return getPaddingBounds();
+  },
+
+  updateTextControls: function () {
+    updateTextControls();
   }
 };
 

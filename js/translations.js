@@ -36,6 +36,7 @@ const translations = {
     // Main Action Buttons
     "tooltip_add_date": "Datum-sjabloon invoegen",
     "tooltip_add_text": "Tekst toevoegen",
+    "tooltip_add_icon": "Icoon toevoegen",
     "tooltip_upload_image": "Afbeelding uploaden",
     "tooltip_add_qr": "QR-code toevoegen",
     "btn_print": "Label printen",
@@ -87,8 +88,18 @@ const translations = {
     "gh_modal_btn_disconnect": "Koppeling verbreken",
     "gh_modal_btn_close": "Sluiten",
     "gh_modal_pat_desc": "Maak een token aan met de 'gist' scope. Klik op de link hierboven om deze direct met de juiste instellingen aan te maken op GitHub.",
-    "gh_modal_btn_create": "Gist Aanmaken",
-    
+    // Icon Modal
+    "icon_modal_title": "Icoon Toevoegen",
+    "icon_search_placeholder": "Zoek icoon (bijv. doos, koffie, pijl, waarschuwing)...",
+    "icon_cat_all": "Alles",
+    "icon_cat_packaging": "Verpakking & Verzending",
+    "icon_cat_food": "Keuken & Voeding",
+    "icon_cat_office": "Kantoor & Opslag",
+    "icon_cat_safety": "Veiligheid & Gevaar",
+    "icon_cat_arrows": "Pijlen & Symbolen",
+    "icon_cat_care": "Wasvoorschriften & Zorg",
+    "icon_no_results": "Geen iconen gevonden voor deze zoekopdracht.",
+
     // Keyboard Shortcuts Modal
     "shortcuts_modal_title": "Sneltoetsen",
     "shortcut_del": "Delete / Backspace",
@@ -201,6 +212,7 @@ const translations = {
     // Main Action Buttons
     "tooltip_add_date": "Insert Date Template",
     "tooltip_add_text": "Add Text",
+    "tooltip_add_icon": "Add Icon",
     "tooltip_upload_image": "Upload Image",
     "tooltip_add_qr": "Add QR Code",
     "btn_print": "Print Label",
@@ -254,6 +266,18 @@ const translations = {
     "gh_modal_pat_desc": "Create a token with the 'gist' scope. Click the link above to create it directly with the correct settings on GitHub.",
     "gh_modal_btn_create": "Create Gist",
     
+    // Icon Modal
+    "icon_modal_title": "Add Icon",
+    "icon_search_placeholder": "Search icons (e.g. box, coffee, arrow, warning)...",
+    "icon_cat_all": "All",
+    "icon_cat_packaging": "Packaging & Shipping",
+    "icon_cat_food": "Kitchen & Food",
+    "icon_cat_office": "Office & Storage",
+    "icon_cat_safety": "Safety & Hazard",
+    "icon_cat_arrows": "Arrows & Symbols",
+    "icon_cat_care": "Care & Laundry",
+    "icon_no_results": "No icons found for this search.",
+
     // Keyboard Shortcuts Modal
     "shortcuts_modal_title": "Keyboard Shortcuts",
     "shortcut_del": "Delete / Backspace",
@@ -397,6 +421,11 @@ window.setLanguage = function(lang) {
   // 7. Force keyboard shortcuts list re-rendering
   if (window.renderShortcutsList) {
     window.renderShortcutsList();
+  }
+
+  // 8. Re-render icon picker categories & grid if present
+  if (window.renderIconPickerLanguage) {
+    window.renderIconPickerLanguage();
   }
 };
 

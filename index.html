@@ -200,6 +200,14 @@
                 <path d="M5 4v3h5.5v12h3V7H19V4z" />
               </svg>
             </button>
+            <button onclick="openIconPicker()" class="btn btn-icon btn-secondary" data-i18n-title="tooltip_add_icon" title="Add Icon">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" />
+                <line x1="15" y1="9" x2="15.01" y2="9" />
+              </svg>
+            </button>
             <button onclick="document.getElementById('imageUploadInput').click()" class="btn btn-icon btn-secondary"
               data-i18n-title="tooltip_upload_image" title="Upload Image">
               <svg class="icon" viewBox="0 0 24 24">
@@ -545,6 +553,26 @@
     </div>
   </div>
 
+  <!-- Icon Picker Modal -->
+  <div id="iconModal" class="modal">
+    <div class="modal-content icon-modal-content">
+      <button class="modal-close" id="closeIconModal" data-i18n-title="bt_modal_btn_close" title="Close">×</button>
+      <h2 data-i18n="icon_modal_title">Icoon Toevoegen</h2>
+      
+      <div class="icon-search-container">
+        <svg class="icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" id="iconSearchInput" class="input-modern" data-i18n-placeholder="icon_search_placeholder" placeholder="Zoek icoon..." autocomplete="off" />
+        <button type="button" id="iconSearchClearBtn" class="search-clear-btn" style="display: none;">×</button>
+      </div>
+
+      <div id="iconCategoryTabs" class="icon-category-tabs"></div>
+      <div id="iconGrid" class="icon-grid"></div>
+    </div>
+  </div>
+
   <!-- QR Code Library - loaded locally for offline support -->
   <script src="js/qrcode.min.js"></script>
   <script src="js/fabric.min.js"></script>
@@ -559,6 +587,7 @@
   <script src="js/dithering.js" defer></script>
   <script src="js/shortcuts.js" defer></script>
   <script src="js/templates.js" defer></script>
+  <script src="js/icons.js" defer></script>
 </body>
 
 </html>
