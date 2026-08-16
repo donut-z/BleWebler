@@ -155,6 +155,37 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas.on('selection:created', updateTextControls);
   canvas.on('object:modified', handleObjectModified); // Update controls and normalize scaling when object is modified
 
+  // Deselect active object when clicking or tapping outside the canvas tape and outside toolbar controls
+  document.addEventListener('pointerdown', (e) => {
+    if (!canvas) return;
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    // 1. If clicking inside canvas container or resize handle, let Fabric handle selection
+    if (e.target && e.target.closest && (e.target.closest('.canvas-container') || e.target.closest('#resizeHandle'))) {
+      return;
+    }
+
+    // 2. If clicking inside toolbar / text formatting / color / modal / accordion controls, preserve selection for interaction
+    if (e.target && e.target.closest && (
+      e.target.closest('#general-controls-box') || 
+      e.target.closest('#alignment-group') || 
+      e.target.closest('#dimensionControls') || 
+      e.target.closest('.modal') ||
+      e.target.closest('.accordion-container') ||
+      e.target.closest('.label-types')
+    )) {
+      return;
+    }
+
+    // 3. Click was outside canvas & outside controls -> exit text editing if active and deselect
+    if (activeObject.isEditing) {
+      activeObject.exitEditing();
+    }
+    canvas.discardActiveObject();
+    canvas.renderAll();
+  });
+
   // Double-click to focus input
   canvas.on('mouse:dblclick', (e) => {
     if (e.target && e.target.isQRCode) {
